@@ -174,7 +174,7 @@ export default function ProdutosPage() {
       nome: produto.nome,
       categoria: produto.categoria,
       unidade: produto.unidade,
-      observacoes: produto.observacoes || '',
+      observacoes: produto.descricao || '',
       fornecedorId: produto.fornecedorId || '',
     });
     setIsDialogOpen(true);

@@ -43,7 +43,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Eye, TrendingDown, Package, Calendar, MapPin } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingDown, Package, Calendar, MapPin } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
@@ -62,6 +72,8 @@ export default function SaidasPage() {
   const [selectedTalhao, setSelectedTalhao] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingSaida, setViewingSaida] = useState<Saida | null>(null);
+  const [editingSaida, setEditingSaida] = useState<Saida | null>(null);
+  const [deletingSaida, setDeletingSaida] = useState<Saida | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
@@ -131,29 +143,42 @@ export default function SaidasPage() {
       // Preparar dados baseado no tipo de saída
       const submitData = {
         ...data,
+        // Converter data para formato ISO datetime
+        dataSaida: `${data.dataSaida}T12:00:00.000Z`,
         // Para TRANSFERENCIA_NEGATIVA, remover talhaoId se estiver vazio
         ...(data.tipo === 'TRANSFERENCIA_NEGATIVA' && { talhaoId: undefined }),
       };
 
-      await apiService.createSaida(submitData);
-      toast({
-        title: 'Sucesso',
-        description: 'Saída registrada com sucesso.',
-      });
+      if (editingSaida) {
+        await apiService.updateSaida(editingSaida.id, submitData);
+        toast({
+          title: 'Sucesso',
+          description: 'Saída atualizada com sucesso.',
+        });
+      } else {
+        await apiService.createSaida(submitData);
+        toast({
+          title: 'Sucesso',
+          description: 'Saída registrada com sucesso.',
+        });
+      }
+      
       setIsDialogOpen(false);
+      setEditingSaida(null);
       form.reset();
       loadSaidas();
     } catch (error) {
-      console.error('Erro ao registrar saída:', error);
+      console.error('Erro ao processar saída:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível registrar a saída.',
+        description: editingSaida ? 'Não foi possível atualizar a saída.' : 'Não foi possível registrar a saída.',
         variant: 'destructive',
       });
     }
   };
 
   const openCreateDialog = () => {
+    setEditingSaida(null);
     form.reset({
       tipo: 'APLICACAO',
       produtoId: '',
@@ -163,6 +188,40 @@ export default function SaidasPage() {
       dataSaida: new Date().toISOString().split('T')[0],
     });
     setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (saida: Saida) => {
+    setEditingSaida(saida);
+    form.reset({
+      tipo: saida.tipo,
+      produtoId: saida.produtoId,
+      talhaoId: saida.talhaoId || '',
+      quantidade: saida.quantidade,
+      observacoes: saida.observacoes || '',
+      dataSaida: new Date(saida.dataSaida).toISOString().split('T')[0],
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingSaida) return;
+
+    try {
+      await apiService.deleteSaida(deletingSaida.id);
+      toast({
+        title: 'Sucesso',
+        description: 'Saída excluída com sucesso.',
+      });
+      setDeletingSaida(null);
+      loadSaidas();
+    } catch (error) {
+      console.error('Erro ao excluir saída:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir a saída.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Limpar talhaoId quando o tipo não for APLICACAO
@@ -378,6 +437,17 @@ export default function SaidasPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditDialog(saida)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => setDeletingSaida(saida)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -416,9 +486,9 @@ export default function SaidasPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Nova Saída</DialogTitle>
+            <DialogTitle>{editingSaida ? 'Editar Saída' : 'Nova Saída'}</DialogTitle>
             <DialogDescription>
-              Registre uma nova saída de produto do estoque.
+              {editingSaida ? 'Edite as informações da saída.' : 'Registre uma nova saída de produto do estoque.'}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -556,7 +626,9 @@ export default function SaidasPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">Registrar Saída</Button>
+                <Button type="submit">
+                  {editingSaida ? 'Atualizar' : 'Registrar Saída'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -640,6 +712,28 @@ export default function SaidasPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog
+        open={!!deletingSaida}
+        onOpenChange={() => setDeletingSaida(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta saída de "{deletingSaida?.produto?.nome}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
