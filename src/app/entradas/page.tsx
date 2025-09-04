@@ -43,6 +43,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingUp, Package, Calendar } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,6 +73,7 @@ export default function EntradasPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEntrada, setEditingEntrada] = useState<Entrada | null>(null);
   const [viewingEntrada, setViewingEntrada] = useState<Entrada | null>(null);
+  const [deletingEntrada, setDeletingEntrada] = useState<Entrada | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
@@ -224,17 +235,16 @@ export default function EntradasPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (entrada: Entrada) => {
-    if (!confirm(`Tem certeza que deseja excluir esta entrada de ${entrada.produto?.nome}?`)) {
-      return;
-    }
+  const handleDelete = async () => {
+    if (!deletingEntrada) return;
 
     try {
-      await apiService.deleteEntrada(entrada.id);
+      await apiService.deleteEntrada(deletingEntrada.id);
       toast({
         title: 'Sucesso',
         description: 'Entrada excluída com sucesso.',
       });
+      setDeletingEntrada(null);
       loadEntradas();
     } catch (error) {
       console.error('Erro ao excluir entrada:', error);
@@ -478,7 +488,7 @@ export default function EntradasPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            onClick={() => handleDelete(entrada)}
+                            onClick={() => setDeletingEntrada(entrada)}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -812,6 +822,28 @@ export default function EntradasPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog
+        open={!!deletingEntrada}
+        onOpenChange={() => setDeletingEntrada(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta entrada de "{deletingEntrada?.produto?.nome}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
