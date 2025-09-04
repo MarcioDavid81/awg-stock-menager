@@ -59,7 +59,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Produto, Fornecedor, ProdutoFormData, produtoSchema } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
+import { toast as info } from 'sonner'
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -72,7 +72,7 @@ export default function ProdutosPage() {
   const [deletingProduto, setDeletingProduto] = useState<Produto | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
+
 
   const form = useForm<ProdutoFormData>({
     resolver: zodResolver(produtoSchema),
@@ -116,11 +116,7 @@ export default function ProdutosPage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os produtos.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao carregar produtos.');
     } finally {
       setLoading(false);
     }
@@ -143,16 +139,10 @@ export default function ProdutosPage() {
       };
       if (editingProduto) {
         await apiService.updateProduto(editingProduto.id, submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Produto atualizado com sucesso.',
-        });
+        info.success('Produto atualizado com sucesso.');
       } else {
         await apiService.createProduto(submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Produto criado com sucesso.',
-        });
+        info.success('Produto criado com sucesso.');
       }
       setIsDialogOpen(false);
       setEditingProduto(null);
@@ -160,11 +150,7 @@ export default function ProdutosPage() {
       loadProdutos();
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o produto.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao salvar produto.');
     }
   };
 
@@ -185,19 +171,12 @@ export default function ProdutosPage() {
 
     try {
       await apiService.deleteProduto(deletingProduto.id);
-      toast({
-        title: 'Sucesso',
-        description: 'Produto excluído com sucesso.',
-      });
+      info.success('Produto excluído com sucesso.');
       setDeletingProduto(null);
       loadProdutos();
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir o produto.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao excluir produto.');
     }
   };
 

@@ -16,15 +16,14 @@ import {
 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { DashboardStats, EstoqueBaixo, MovimentacaoRecente } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { toast as info } from 'sonner';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [estoqueBaixo, setEstoqueBaixo] = useState<EstoqueBaixo[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoRecente[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     loadDashboardData();
@@ -46,11 +45,7 @@ export default function DashboardPage() {
       setMovimentacoes(movimentacoesRes.data);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os dados do dashboard.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível carregar os dados do dashboard.');
     } finally {
       setLoading(false);
     }

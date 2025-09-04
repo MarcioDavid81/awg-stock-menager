@@ -36,9 +36,9 @@ import {
 import { Search, MoreHorizontal, Eye, Package, AlertTriangle, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Estoque, Produto, Fornecedor } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast as info } from 'sonner';
 
 export default function EstoquePage() {
   const [estoque, setEstoque] = useState<Estoque[]>([]);
@@ -52,7 +52,6 @@ export default function EstoquePage() {
   const [viewingEstoque, setViewingEstoque] = useState<Estoque | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
 
   useEffect(() => {
     loadEstoque();
@@ -74,11 +73,7 @@ export default function EstoquePage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar estoque:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar o estoque.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível carregar o estoque.');
     } finally {
       setLoading(false);
     }

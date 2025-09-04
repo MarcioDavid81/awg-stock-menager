@@ -47,12 +47,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, MapPin, Ruler } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Edit, Trash2, MapPin, Ruler, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Talhao, TalhaoFormData, talhaoSchema } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
+import { toast as info } from 'sonner';
 
 export default function TalhoesPage() {
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
@@ -63,7 +63,7 @@ export default function TalhoesPage() {
   const [deletingTalhao, setDeletingTalhao] = useState<Talhao | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
+
 
   const form = useForm<TalhaoFormData>({
     resolver: zodResolver(talhaoSchema),
@@ -90,30 +90,21 @@ export default function TalhoesPage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar talhões:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os talhões.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível carregar os talhões.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async (data: TalhaoFormData) => {
+    setLoading(true);
     try {
       if (editingTalhao) {
         await apiService.updateTalhao(editingTalhao.id, data);
-        toast({
-          title: 'Sucesso',
-          description: 'Talhão atualizado com sucesso.',
-        });
+        info.success('Talhão atualizado com sucesso.');
       } else {
         await apiService.createTalhao(data);
-        toast({
-          title: 'Sucesso',
-          description: 'Talhão criado com sucesso.',
-        });
+        info.success('Talhão criado com sucesso.');
       }
       setIsDialogOpen(false);
       setEditingTalhao(null);
@@ -121,15 +112,14 @@ export default function TalhoesPage() {
       loadTalhoes();
     } catch (error) {
       console.error('Erro ao salvar talhão:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o talhão.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível salvar o talhão.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (talhao: Talhao) => {
+    setLoading(true);
     setEditingTalhao(talhao);
     form.reset({
       nome: talhao.nome,
@@ -138,26 +128,23 @@ export default function TalhoesPage() {
       observacoes: talhao.observacoes || '',
     });
     setIsDialogOpen(true);
+    setLoading(false);
   };
 
   const handleDelete = async () => {
+    setLoading(true);
     if (!deletingTalhao) return;
 
     try {
       await apiService.deleteTalhao(deletingTalhao.id);
-      toast({
-        title: 'Sucesso',
-        description: 'Talhão excluído com sucesso.',
-      });
+      info.success('Talhão excluído com sucesso.');
       setDeletingTalhao(null);
       loadTalhoes();
     } catch (error) {
       console.error('Erro ao excluir talhão:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir o talhão.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível excluir o talhão.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -450,8 +437,9 @@ export default function TalhoesPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={loading}>
                   {editingTalhao ? 'Atualizar' : 'Criar'}
+                  {loading && <Loader className="ml-2 h-4 w-4 animate-spin" />}
                 </Button>
               </DialogFooter>
             </form>
@@ -474,8 +462,9 @@ export default function TalhoesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700" disabled={loading}>
               Excluir
+              {loading && <Loader className="ml-2 h-4 w-4 animate-spin" />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

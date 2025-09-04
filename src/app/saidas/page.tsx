@@ -53,14 +53,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingDown, Package, Calendar, MapPin } from 'lucide-react';
+import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingDown, Package, Calendar, MapPin, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Saida, Produto, Talhao, SaidaFormData, saidaSchema } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast as info } from 'sonner'
 
 export default function SaidasPage() {
   const [saidas, setSaidas] = useState<Saida[]>([]);
@@ -76,7 +77,7 @@ export default function SaidasPage() {
   const [deletingSaida, setDeletingSaida] = useState<Saida | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
+ 
 
   const form = useForm<SaidaFormData>({
     resolver: zodResolver(saidaSchema),
@@ -110,11 +111,7 @@ export default function SaidasPage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar saídas:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar as saídas.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao carregar saídas.');
     } finally {
       setLoading(false);
     }
@@ -139,6 +136,7 @@ export default function SaidasPage() {
   };
 
   const handleSubmit = async (data: SaidaFormData) => {
+    setLoading(true);
     try {
       // Preparar dados baseado no tipo de saída
       const submitData = {
@@ -151,16 +149,10 @@ export default function SaidasPage() {
 
       if (editingSaida) {
         await apiService.updateSaida(editingSaida.id, submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Saída atualizada com sucesso.',
-        });
+        info.success('Saída atualizada com sucesso.');
       } else {
         await apiService.createSaida(submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Saída registrada com sucesso.',
-        });
+        info.success('Saída registrada com sucesso.');
       }
       
       setIsDialogOpen(false);
@@ -169,11 +161,9 @@ export default function SaidasPage() {
       loadSaidas();
     } catch (error) {
       console.error('Erro ao processar saída:', error);
-      toast({
-        title: 'Erro',
-        description: editingSaida ? 'Não foi possível atualizar a saída.' : 'Não foi possível registrar a saída.',
-        variant: 'destructive',
-      });
+      info.error(`${editingSaida ? 'Não foi possível atualizar a saída.' : 'Não foi possível registrar a saída.'}`)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -208,19 +198,12 @@ export default function SaidasPage() {
 
     try {
       await apiService.deleteSaida(deletingSaida.id);
-      toast({
-        title: 'Sucesso',
-        description: 'Saída excluída com sucesso.',
-      });
+      info.success('Saída excluída com sucesso.');
       setDeletingSaida(null);
       loadSaidas();
     } catch (error) {
       console.error('Erro ao excluir saída:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir a saída.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao excluir saída.');
     }
   };
 
@@ -626,8 +609,9 @@ export default function SaidasPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={loading}>
                   {editingSaida ? 'Atualizar' : 'Registrar Saída'}
+                  {loading && <Loader className="ml-2 animate-spin" />}
                 </Button>
               </DialogFooter>
             </form>

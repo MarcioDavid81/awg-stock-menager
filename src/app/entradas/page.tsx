@@ -53,14 +53,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingUp, Package, Calendar } from 'lucide-react';
+import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingUp, Package, Calendar, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Entrada, Produto, Fornecedor, EntradaFormData, entradaSchema } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast as info } from 'sonner';
 
 export default function EntradasPage() {
   const [entradas, setEntradas] = useState<Entrada[]>([]);
@@ -76,7 +76,6 @@ export default function EntradasPage() {
   const [deletingEntrada, setDeletingEntrada] = useState<Entrada | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
 
   const form = useForm<EntradaFormData>({
     resolver: zodResolver(entradaSchema),
@@ -123,11 +122,7 @@ export default function EntradasPage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar entradas:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar as entradas.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível carregar as entradas.');
     } finally {
       setLoading(false);
     }
@@ -152,6 +147,7 @@ export default function EntradasPage() {
   };
 
   const handleSubmit = async (data: EntradaFormData) => {
+    setLoading(true);
     try {
       const submitData = {
         ...data,
@@ -177,16 +173,10 @@ export default function EntradasPage() {
       
       if (editingEntrada) {
         await apiService.updateEntrada(editingEntrada.id, submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Entrada atualizada com sucesso.',
-        });
+        info.success('Entrada atualizada com sucesso.');
       } else {
         await apiService.createEntrada(submitData);
-        toast({
-          title: 'Sucesso',
-          description: 'Entrada registrada com sucesso.',
-        });
+        info.success('Entrada registrada com sucesso.');
       }
       
       setIsDialogOpen(false);
@@ -195,11 +185,9 @@ export default function EntradasPage() {
       loadEntradas();
     } catch (error) {
       console.error('Erro ao processar entrada:', error);
-      toast({
-        title: 'Erro',
-        description: editingEntrada ? 'Não foi possível atualizar a entrada.' : 'Não foi possível registrar a entrada.',
-        variant: 'destructive',
-      });
+      info.error(`${editingEntrada ? 'Não foi possível atualizar a entrada.' : 'Não foi possível registrar a entrada.'}`)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -240,19 +228,12 @@ export default function EntradasPage() {
 
     try {
       await apiService.deleteEntrada(deletingEntrada.id);
-      toast({
-        title: 'Sucesso',
-        description: 'Entrada excluída com sucesso.',
-      });
+      info.success('Entrada excluída com sucesso.');
       setDeletingEntrada(null);
       loadEntradas();
     } catch (error) {
       console.error('Erro ao excluir entrada:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir a entrada.',
-        variant: 'destructive',
-      });
+      info.error('Não foi possível excluir a entrada.');
     }
   };
 
@@ -730,8 +711,9 @@ export default function EntradasPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={loading}>
                   {editingEntrada ? 'Atualizar Entrada' : 'Registrar Entrada'}
+                  {loading && <Loader className="ml-2 animate-spin" />}
                 </Button>
               </DialogFooter>
             </form>

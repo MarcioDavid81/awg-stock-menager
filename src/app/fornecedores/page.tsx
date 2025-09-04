@@ -30,7 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,12 +49,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Building2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Building2, MapPin } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Fornecedor, FornecedorFormData, fornecedorSchema } from '@/types/frontend';
-import { useToast } from '@/hooks/use-toast';
+import { toast as info } from 'sonner';
 
 export default function FornecedoresPage() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -66,7 +66,7 @@ export default function FornecedoresPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [tipoPessoa, setTipoPessoa] = useState<'juridica' | 'fisica'>('juridica');
-  const { toast } = useToast();
+
 
   const form = useForm<FornecedorFormData>({
     resolver: zodResolver(fornecedorSchema),
@@ -106,11 +106,7 @@ export default function FornecedoresPage() {
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Erro ao carregar fornecedores:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os fornecedores.',
-        variant: 'destructive',
-      });
+      info('Erro ao carregar fornecedores.');
     } finally {
       setLoading(false);
     }
@@ -120,16 +116,10 @@ export default function FornecedoresPage() {
     try {
       if (editingFornecedor) {
         await apiService.updateFornecedor(editingFornecedor.id, data);
-        toast({
-          title: 'Sucesso',
-          description: 'Fornecedor atualizado com sucesso.',
-        });
+        info.success('Fornecedor atualizado com sucesso.');
       } else {
         await apiService.createFornecedor(data);
-        toast({
-          title: 'Sucesso',
-          description: 'Fornecedor criado com sucesso.',
-        });
+        info.success('Fornecedor criado com sucesso.');
       }
       setIsDialogOpen(false);
       setEditingFornecedor(null);
@@ -137,11 +127,7 @@ export default function FornecedoresPage() {
       loadFornecedores();
     } catch (error) {
       console.error('Erro ao salvar fornecedor:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o fornecedor.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao salvar fornecedor.');
     }
   };
 
@@ -165,19 +151,12 @@ export default function FornecedoresPage() {
 
     try {
       await apiService.deleteFornecedor(deletingFornecedor.id);
-      toast({
-        title: 'Sucesso',
-        description: 'Fornecedor excluído com sucesso.',
-      });
+      info.success('Fornecedor excluído com sucesso.');
       setDeletingFornecedor(null);
       loadFornecedores();
     } catch (error) {
       console.error('Erro ao excluir fornecedor:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir o fornecedor.',
-        variant: 'destructive',
-      });
+      info.error('Erro ao excluir fornecedor.');
     }
   };
 
