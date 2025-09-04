@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para Talhões (locais de uso dos insumos)
+model Talhao {
+  id          String   @id @default(cuid())
+  nome        String
+  descricao   String?
+  area        Float?   // área em hectares
+  localizacao String?
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  saidas Saida[]
+
+  @@map("talhoes")
+}
+
+// Modelo para Fornecedores
+model Fornecedor {
+  id        String   @id @default(cuid())
+  nome      String
+  cnpj      String?  @unique
+  cpf       String?  @unique
+  email     String?
+  telefone  String?
+  endereco  String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  entradas Entrada[]
+
+  @@map("fornecedores")
+}
+
+// Modelo para Produtos (insumos agrícolas)
+model Produto {
+  id          String   @id @default(cuid())
+  nome        String
+  descricao   String?
+  unidade     String   // kg, litros, unidades, etc.
+  categoria   String?  // fertilizante, defensivo, sementes, etc.
+  codigoBarras String? @unique
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  entradas Entrada[]
+  saidas   Saida[]
+  estoques Estoque[]
+
+  @@map("produtos")
+}
+
+// Modelo para Entradas (compras ou transferências positivas)
+model Entrada {
+  id           String      @id @default(cuid())
+  tipo         TipoEntrada // COMPRA ou TRANSFERENCIA_POSITIVA
+  quantidade   Float
+  valorUnitario Float?
+  valorTotal   Float?
+  numeroNota   String?
+  observacoes  String?
+  dataEntrada  DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relacionamentos
+  produtoId    String
+  produto      Produto    @relation(fields: [produtoId], references: [id])
+  fornecedorId String?
+  fornecedor   Fornecedor? @relation(fields: [fornecedorId], references: [id])
+
+  @@map("entradas")
+}
+
+// Modelo para Saídas (aplicações ou transferências negativas)
+model Saida {
+  id          String    @id @default(cuid())
+  tipo        TipoSaida // APLICACAO ou TRANSFERENCIA_NEGATIVA
+  quantidade  Float
+  observacoes String?
+  dataSaida   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relacionamentos
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+  talhaoId  String?
+  talhao    Talhao? @relation(fields: [talhaoId], references: [id])
+
+  @@map("saidas")
+}
+
+// Modelo para Estoque atual de cada produto
+model Estoque {
+  id               String   @id @default(cuid())
+  quantidade       Float    @default(0)
+  quantidadeMinima Float?   // estoque mínimo para alerta
+  valorMedio       Float?   // valor médio do estoque
+  ultimaAtualizacao DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relacionamentos
+  produtoId String  @unique
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("estoques")
+}
+
+// Enums para tipos de operações
+enum TipoEntrada {
+  COMPRA
+  TRANSFERENCIA_POSITIVA
+}
+
+enum TipoSaida {
+  APLICACAO
+  TRANSFERENCIA_NEGATIVA
+}
+
+

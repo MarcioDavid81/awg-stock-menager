@@ -1,0 +1,317 @@
+import { z } from 'zod';
+
+// Tipos base dos modelos
+export interface Talhao {
+  id: string;
+  nome: string;
+  area: number;
+  localizacao?: string;
+  observacoes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Fornecedor {
+  id: string;
+  nome: string;
+  cnpj?: string;
+  cpf?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Produto {
+  id: string;
+  nome: string;
+  categoria: string;
+  unidade: string;
+  entradas: Entrada[];
+  saidas: Saida[];
+  descricao?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  fornecedorId?: string;
+  fornecedor?: Fornecedor;
+}
+
+export interface Entrada {
+  id: string;
+  tipo: 'COMPRA' | 'TRANSFERENCIA_POSITIVA';
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
+  observacoes?: string;
+  dataEntrada: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  produtoId: string;
+  produto?: Produto;
+  fornecedorId?: string;
+  fornecedor?: Fornecedor;
+}
+
+export interface Saida {
+  id: string;
+  tipo: 'APLICACAO' | 'TRANSFERENCIA_NEGATIVA';
+  quantidade: number;
+  observacoes?: string;
+  dataSaida: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  produtoId: string;
+  produto?: Produto;
+  talhaoId?: string;
+  talhao?: Talhao;
+}
+
+export interface Estoque {
+  id: string;
+  quantidade: number;
+  quantidadeMinima: number;
+  valorMedio: number;
+  ultimaAtualizacao: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  produtoId: string;
+  produto?: Produto;
+}
+
+// Schemas Zod para validação de formulários
+export const talhaoSchema = z.object({
+  nome: z.string().min(1, 'Nome é obrigatório'),
+  area: z.number().positive('Área deve ser um número positivo'),
+  localizacao: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+// Função para validar CPF
+function validarCPF(cpf: string): boolean {
+  cpf = cpf.replace(/[^\d]/g, '');
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let resto = 11 - (soma % 11);
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.charAt(9))) return false;
+  
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  resto = 11 - (soma % 11);
+  if (resto === 10 || resto === 11) resto = 0;
+  return resto === parseInt(cpf.charAt(10));
+}
+
+// Função para validar CNPJ
+function validarCNPJ(cnpj: string): boolean {
+  cnpj = cnpj.replace(/[^\d]/g, '');
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+  
+  let tamanho = cnpj.length - 2;
+  let numeros = cnpj.substring(0, tamanho);
+  let digitos = cnpj.substring(tamanho);
+  let soma = 0;
+  let pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado !== parseInt(digitos.charAt(0))) return false;
+  
+  tamanho = tamanho + 1;
+  numeros = cnpj.substring(0, tamanho);
+  soma = 0;
+  pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  return resultado === parseInt(digitos.charAt(1));
+}
+
+export const fornecedorSchema = z.object({
+  nome: z.string().min(1, 'Nome e obrigatorio'),
+  cnpj: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    return validarCNPJ(val);
+  }, 'CNPJ invalido'),
+  cpf: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    return validarCPF(val);
+  }, 'CPF invalido'),
+  telefone: z.string().optional(),
+  email: z.string().email('Email invalido').optional().or(z.literal('')),
+  endereco: z.string().optional(),
+}).refine((data) => {
+  const hasCnpj = data.cnpj && data.cnpj.trim() !== '';
+  const hasCpf = data.cpf && data.cpf.trim() !== '';
+  return hasCnpj || hasCpf;
+}, {
+  message: 'E necessario informar CPF ou CNPJ',
+  path: ['cnpj'],
+}).refine((data) => {
+  const hasCnpj = data.cnpj && data.cnpj.trim() !== '';
+  const hasCpf = data.cpf && data.cpf.trim() !== '';
+  return !(hasCnpj && hasCpf);
+}, {
+  message: 'Informe apenas CPF ou CNPJ, nao ambos',
+  path: ['cnpj'],
+});
+
+export const produtoSchema = z.object({
+  nome: z.string().min(1, 'Nome é obrigatório'),
+  categoria: z.string().min(1, 'Categoria é obrigatória'),
+  unidade: z.string().min(1, 'Unidade é obrigatória'),
+  observacoes: z.string().optional(),
+  fornecedorId: z.string().optional(),
+});
+
+export const entradaSchema = z.object({
+  tipo: z.enum(['COMPRA', 'TRANSFERENCIA_POSITIVA']),
+  quantidade: z.number().positive('Quantidade deve ser um número positivo'),
+  valorUnitario: z.number().min(0, 'Valor unitário deve ser um número não negativo').optional(),
+  valorTotal: z.number().min(0, 'Valor total deve ser um número não negativo').optional(),
+  numeroNota: z.string().optional(),
+  observacoes: z.string().optional(),
+  dataEntrada: z.string().optional(),
+  produtoId: z.string().min(1, 'Produto é obrigatório'),
+  fornecedorId: z.string().optional(),
+}).refine((data) => {
+  if (data.tipo === 'COMPRA' && !data.fornecedorId) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Fornecedor é obrigatório para compras',
+  path: ['fornecedorId'],
+}).refine((data) => {
+  if (data.tipo === 'COMPRA' && (!data.valorUnitario || data.valorUnitario <= 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Valor unitário é obrigatório e deve ser positivo para compras',
+  path: ['valorUnitario'],
+});
+
+export const saidaSchema = z.object({
+  tipo: z.enum(['APLICACAO', 'TRANSFERENCIA_NEGATIVA']),
+  quantidade: z.number().positive('Quantidade deve ser um número positivo'),
+  observacoes: z.string().optional(),
+  dataSaida: z.string().optional(),
+  produtoId: z.string().min(1, 'Produto é obrigatório'),
+  talhaoId: z.string().optional(),
+}).refine((data) => {
+  if (data.tipo === 'APLICACAO' && !data.talhaoId) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Talhão é obrigatório para aplicações',
+  path: ['talhaoId'],
+});
+
+// Tipos para formulários
+export type TalhaoFormData = z.infer<typeof talhaoSchema>;
+export type FornecedorFormData = z.infer<typeof fornecedorSchema>;
+export type ProdutoFormData = z.infer<typeof produtoSchema>;
+export type EntradaFormData = z.infer<typeof entradaSchema>;
+export type SaidaFormData = z.infer<typeof saidaSchema>;
+
+// Tipos para respostas da API
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Tipos para filtros
+export interface TalhaoFilters {
+  nome?: string;
+  areaMin?: number;
+  areaMax?: number;
+}
+
+export interface FornecedorFilters {
+  nome?: string;
+  contato?: string;
+}
+
+export interface ProdutoFilters {
+  nome?: string;
+  categoria?: string;
+  fornecedorId?: string;
+}
+
+export interface EntradaFilters {
+  tipo?: 'COMPRA' | 'TRANSFERENCIA_POSITIVA';
+  produtoId?: string;
+  fornecedorId?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+export interface SaidaFilters {
+  tipo?: 'APLICACAO' | 'TRANSFERENCIA_NEGATIVA';
+  produtoId?: string;
+  talhaoId?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+export interface EstoqueFilters {
+  produtoId?: string;
+  categoria?: string;
+  estoqueMinimo?: boolean;
+}
+
+// Tipos para dashboard
+export interface DashboardStats {
+  totalProdutos: number;
+  totalTalhoes: number;
+  totalFornecedores: number;
+  produtosEstoqueBaixo: number;
+  entradasMes: number;
+  saidasMes: number;
+  valorTotalEstoque: number;
+}
+
+export interface EstoqueBaixo {
+  produto: Produto;
+  quantidadeAtual: number;
+  quantidadeMinima: number;
+  diferenca: number;
+}
+
+export interface MovimentacaoRecente {
+  id: string;
+  tipo: 'entrada' | 'saida';
+  produto: string;
+  quantidade: number;
+  data: Date;
+  observacoes?: string;
+}
