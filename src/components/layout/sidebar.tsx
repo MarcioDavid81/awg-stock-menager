@@ -73,7 +73,7 @@ export function Sidebar({ className }: SidebarProps) {
             <Image src={logo} alt="logo" width={200} height={150} />
           </div>
           <Separator />
-          <div className="space-y-1">
+          <div className="mt-2 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
