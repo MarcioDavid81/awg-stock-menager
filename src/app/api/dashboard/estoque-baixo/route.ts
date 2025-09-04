@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../../lib/prisma';
-import { Estoque } from '@/generated/prisma';
 
 export async function GET(request: NextRequest) {
   try {

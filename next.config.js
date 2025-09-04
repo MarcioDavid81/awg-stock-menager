@@ -3,9 +3,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma']
-  }
+  serverExternalPackages: ['@prisma/client', 'prisma']
 };
 
 module.exports = nextConfig;
