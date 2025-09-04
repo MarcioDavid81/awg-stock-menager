@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -54,7 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Package, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
@@ -85,12 +84,7 @@ export default function ProdutosPage() {
     },
   });
 
-  useEffect(() => {
-    loadProdutos();
-    loadFornecedores();
-  }, [page, searchTerm, selectedCategoria]);
-
-  const loadProdutos = async () => {
+  const loadProdutos = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -120,16 +114,21 @@ export default function ProdutosPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm, selectedCategoria]);
 
-  const loadFornecedores = async () => {
+  const loadFornecedores = useCallback(async () => {
     try {
       const response = await apiService.getFornecedores({}, 1, 1000);
       setFornecedores(response.data);
     } catch (error) {
       console.error('Erro ao carregar fornecedores:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadProdutos();
+    loadFornecedores();
+  }, [loadProdutos, loadFornecedores]);
 
   const handleSubmit = async (data: ProdutoFormData) => {
     try {
@@ -491,8 +490,9 @@ export default function ProdutosPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={loading}>
                   {editingProduto ? 'Atualizar' : 'Criar'}
+                  {loading && <Loader className="ml-2 h-4 w-4 animate-spin" />}
                 </Button>
               </DialogFooter>
             </form>
@@ -509,7 +509,7 @@ export default function ProdutosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o produto "{deletingProduto?.nome}"?
+              Tem certeza que deseja excluir o produto &quot;{deletingProduto?.nome}&quot;?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

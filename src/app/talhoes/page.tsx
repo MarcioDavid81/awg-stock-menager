@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -75,11 +75,7 @@ export default function TalhoesPage() {
     },
   });
 
-  useEffect(() => {
-    loadTalhoes();
-  }, [page, searchTerm]);
-
-  const loadTalhoes = async () => {
+  const loadTalhoes = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -94,7 +90,11 @@ export default function TalhoesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    loadTalhoes();
+  }, [loadTalhoes]);
 
   const handleSubmit = async (data: TalhaoFormData) => {
     setLoading(true);
@@ -456,7 +456,7 @@ export default function TalhoesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o talhão "{deletingTalhao?.nome}"?
+              Tem certeza que deseja excluir o talhão &quot;{deletingTalhao?.nome}&quot;?
               Esta ação não pode ser desfeita e pode afetar movimentações de estoque associadas.
             </AlertDialogDescription>
           </AlertDialogHeader>

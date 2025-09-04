@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -49,7 +48,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Building2, MapPin } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Building2, MapPin, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
@@ -91,11 +90,7 @@ export default function FornecedoresPage() {
     }
   }, [tipoWatch]);
 
-  useEffect(() => {
-    loadFornecedores();
-  }, [page, searchTerm]);
-
-  const loadFornecedores = async () => {
+  const loadFornecedores = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -110,7 +105,11 @@ export default function FornecedoresPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    loadFornecedores();
+  }, [loadFornecedores]);
 
   const handleSubmit = async (data: FornecedorFormData) => {
     try {
@@ -480,8 +479,9 @@ export default function FornecedoresPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={loading}>
                   {editingFornecedor ? 'Atualizar' : 'Criar'}
+                  {loading && <Loader className="ml-2 h-4 w-4 animate-spin" />}
                 </Button>
               </DialogFooter>
             </form>
@@ -498,7 +498,7 @@ export default function FornecedoresPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o fornecedor "{deletingFornecedor?.nome}"?
+              Tem certeza que deseja excluir o fornecedor &quot;{deletingFornecedor?.nome}&quot;?
               Esta ação não pode ser desfeita e pode afetar produtos associados.
             </AlertDialogDescription>
           </AlertDialogHeader>

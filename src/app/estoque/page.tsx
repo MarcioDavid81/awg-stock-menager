@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,13 +53,7 @@ export default function EstoquePage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    loadEstoque();
-    loadProdutos();
-    loadFornecedores();
-  }, [page, searchTerm, selectedCategoria, selectedFornecedor, stockFilter]);
-
-  const loadEstoque = async () => {
+  const loadEstoque = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -77,25 +71,31 @@ export default function EstoquePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, selectedCategoria, selectedFornecedor, stockFilter]);
 
-  const loadProdutos = async () => {
+  const loadProdutos = useCallback(async () => {
     try {
       const response = await apiService.getProdutos({}, 1, 1000);
       setProdutos(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
     }
-  };
+  }, []);
 
-  const loadFornecedores = async () => {
+  const loadFornecedores = useCallback(async () => {
     try {
       const response = await apiService.getFornecedores({}, 1, 1000);
       setFornecedores(response.data);
     } catch (error) {
       console.error('Erro ao carregar fornecedores:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadEstoque();
+    loadProdutos();
+    loadFornecedores();
+  }, [loadEstoque, loadProdutos, loadFornecedores]);
 
   const filteredEstoque = estoque.filter(item => {
     const matchesSearch = item.produto?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||

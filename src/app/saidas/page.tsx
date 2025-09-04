@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +68,7 @@ export default function SaidasPage() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [selectedProduto, setSelectedProduto] = useState<string>('');
   const [selectedTalhao, setSelectedTalhao] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -93,13 +93,7 @@ export default function SaidasPage() {
 
   const tipoSaida = form.watch('tipo');
 
-  useEffect(() => {
-    loadSaidas();
-    loadProdutos();
-    loadTalhoes();
-  }, [page, searchTerm, selectedProduto, selectedTalhao]);
-
-  const loadSaidas = async () => {
+  const loadSaidas = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -115,25 +109,31 @@ export default function SaidasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProduto, selectedTalhao, page]);
 
-  const loadProdutos = async () => {
+  const loadProdutos = useCallback(async () => {
     try {
       const response = await apiService.getProdutos({}, 1, 1000);
       setProdutos(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
     }
-  };
+  }, []);
 
-  const loadTalhoes = async () => {
+  const loadTalhoes = useCallback(async () => {
     try {
       const response = await apiService.getTalhoes({}, 1, 1000);
       setTalhoes(response.data);
     } catch (error) {
       console.error('Erro ao carregar talhões:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSaidas();
+    loadProdutos();
+    loadTalhoes();
+  }, [loadSaidas, loadProdutos, loadTalhoes]);
 
   const handleSubmit = async (data: SaidaFormData) => {
     setLoading(true);
@@ -218,9 +218,7 @@ export default function SaidasPage() {
     return `${new Intl.NumberFormat('pt-BR').format(quantity)} ${unidade}`;
   };
 
-  const getTotalQuantity = () => {
-    return saidas.reduce((total, saida) => total + saida.quantidade, 0);
-  };
+
 
   return (
     <div className="space-y-6">
@@ -706,7 +704,7 @@ export default function SaidasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta saída de "{deletingSaida?.produto?.nome}"?
+              Tem certeza que deseja excluir esta saída de &quot;{deletingSaida?.produto?.nome}&quot;?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

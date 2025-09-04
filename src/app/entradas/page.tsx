@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +67,7 @@ export default function EntradasPage() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [selectedProduto, setSelectedProduto] = useState<string>('');
   const [selectedFornecedor, setSelectedFornecedor] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -104,13 +104,7 @@ export default function EntradasPage() {
     form.setValue('valorTotal', valorTotal);
   }, [watchedQuantidade, watchedValorUnitario, form]);
 
-  useEffect(() => {
-    loadEntradas();
-    loadProdutos();
-    loadFornecedores();
-  }, [page, searchTerm, selectedProduto, selectedFornecedor]);
-
-  const loadEntradas = async () => {
+  const loadEntradas = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
@@ -126,25 +120,31 @@ export default function EntradasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, selectedProduto, selectedFornecedor]);
 
-  const loadProdutos = async () => {
+  const loadProdutos = useCallback(async () => {
     try {
       const response = await apiService.getProdutos({}, 1, 1000);
       setProdutos(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
     }
-  };
+  }, []);
 
-  const loadFornecedores = async () => {
+  const loadFornecedores = useCallback(async () => {
     try {
       const response = await apiService.getFornecedores({}, 1, 1000);
       setFornecedores(response.data);
     } catch (error) {
       console.error('Erro ao carregar fornecedores:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadEntradas();
+    loadProdutos();
+    loadFornecedores();
+  }, [loadEntradas, loadProdutos, loadFornecedores]);
 
   const handleSubmit = async (data: EntradaFormData) => {
     setLoading(true);
@@ -261,9 +261,7 @@ export default function EntradasPage() {
     return entradas.reduce((total, entrada) => total + (entrada.quantidade * entrada.valorUnitario), 0);
   };
 
-  const getTotalQuantity = () => {
-    return entradas.reduce((total, entrada) => total + entrada.quantidade, 0);
-  };
+
 
   return (
     <div className="space-y-6">
@@ -814,7 +812,7 @@ export default function EntradasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta entrada de "{deletingEntrada?.produto?.nome}"?
+              Tem certeza que deseja excluir esta entrada de &quot;{deletingEntrada?.produto?.nome}&quot;?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

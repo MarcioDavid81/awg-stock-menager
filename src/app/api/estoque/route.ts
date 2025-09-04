@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../generated/prisma';
 import { z } from 'zod';
@@ -290,7 +291,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Buscar estoque atual
-    let estoque = await prisma.estoque.findUnique({
+    const estoque = await prisma.estoque.findUnique({
       where: { produtoId },
     });
     

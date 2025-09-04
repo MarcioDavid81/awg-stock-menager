@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../../lib/prisma';
-import { Estoque } from '@/types/api';
 
 export async function GET(request: NextRequest) {
   try {
