@@ -66,7 +66,7 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <div className={cn('pb-12 min-h-screen', className)}>
+    <div className={cn('pb-12 min-h-screen bg-green-50', className)}>
       <div className="space-y-4 py-4">
         <div className="px-3">
           <div className="flex items-center justify-center">
@@ -83,7 +83,7 @@ export function Sidebar({ className }: SidebarProps) {
                   className={cn(
                     'flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors',
                     isActive
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-primary text-accent-foreground text-white hover:bg-primary hover:text-white'
                       : 'text-muted-foreground'
                   )}
                 >
