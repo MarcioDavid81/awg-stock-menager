@@ -23,9 +23,9 @@ const updateSaidaSchema = z.object({
 });
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Função para reverter estoque após exclusão/alteração de saída
@@ -79,7 +79,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const saida = await prisma.saida.findUnique({
       where: { id },
@@ -125,7 +125,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Validar dados de entrada
@@ -270,7 +270,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar se a saída existe
     const existingSaida = await prisma.saida.findUnique({

@@ -43,6 +43,7 @@ export interface Entrada {
   quantidade: number;
   valorUnitario: number;
   valorTotal: number;
+  numeroNota?: string;
   observacoes?: string;
   dataEntrada: Date;
   createdAt: Date;

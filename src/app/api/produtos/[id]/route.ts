@@ -15,9 +15,9 @@ const updateProdutoSchema = z.object({
 });
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET - Buscar produto por ID
@@ -26,7 +26,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const produto = await prisma.produto.findUnique({
       where: { id },
@@ -91,7 +91,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Validar dados de entrada
@@ -172,7 +172,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({

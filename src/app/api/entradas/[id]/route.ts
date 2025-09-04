@@ -26,9 +26,9 @@ const updateEntradaSchema = z.object({
 });
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Função para reverter estoque após exclusão/alteração de entrada
@@ -105,7 +105,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const entrada = await prisma.entrada.findUnique({
       where: { id },
@@ -151,9 +151,9 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
-    
+
     // Validar dados de entrada
     const validatedData = updateEntradaSchema.parse(body);
     
@@ -254,11 +254,12 @@ export async function PUT(
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      
       return NextResponse.json(
         {
           success: false,
           error: 'Dados inválidos',
-          details: error,
+          details: error.issues,
         },
         { status: 400 }
       );
@@ -281,7 +282,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar se a entrada existe
     const existingEntrada = await prisma.entrada.findUnique({

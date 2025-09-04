@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Eye, TrendingUp, Package, Calendar } from 'lucide-react';
+import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingUp, Package, Calendar } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
@@ -61,6 +61,7 @@ export default function EntradasPage() {
   const [selectedProduto, setSelectedProduto] = useState<string>('');
   const [selectedFornecedor, setSelectedFornecedor] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEntrada, setEditingEntrada] = useState<Entrada | null>(null);
   const [viewingEntrada, setViewingEntrada] = useState<Entrada | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -143,6 +144,8 @@ export default function EntradasPage() {
     try {
       const submitData = {
         ...data,
+        // Converter data para formato ISO datetime
+        dataEntrada: data.dataEntrada ? new Date(data.dataEntrada + 'T12:00:00').toISOString() : undefined,
         // Para transferências, remover campos relacionados a compra
         ...(data.tipo === 'TRANSFERENCIA_POSITIVA' && {
           fornecedorId: undefined,
@@ -150,31 +153,47 @@ export default function EntradasPage() {
           valorTotal: undefined,
           numeroNota: data.numeroNota || undefined,
         }),
-        // Para compras, garantir que fornecedor está presente
+        // Para compras, garantir que fornecedor está presente e valores são válidos
         ...(data.tipo === 'COMPRA' && {
           fornecedorId: data.fornecedorId || undefined,
+          valorUnitario: data.valorUnitario && data.valorUnitario > 0 ? data.valorUnitario : undefined,
+          valorTotal: data.valorTotal && data.valorTotal > 0 ? data.valorTotal : undefined,
         }),
+        // Remover campos com valor 0 ou undefined para evitar erro de validação
+        ...((!data.valorUnitario || data.valorUnitario <= 0) && { valorUnitario: undefined }),
+        ...((!data.valorTotal || data.valorTotal <= 0) && { valorTotal: undefined })
       };
       
-      await apiService.createEntrada(submitData);
-      toast({
-        title: 'Sucesso',
-        description: 'Entrada registrada com sucesso.',
-      });
+      if (editingEntrada) {
+        await apiService.updateEntrada(editingEntrada.id, submitData);
+        toast({
+          title: 'Sucesso',
+          description: 'Entrada atualizada com sucesso.',
+        });
+      } else {
+        await apiService.createEntrada(submitData);
+        toast({
+          title: 'Sucesso',
+          description: 'Entrada registrada com sucesso.',
+        });
+      }
+      
       setIsDialogOpen(false);
+      setEditingEntrada(null);
       form.reset();
       loadEntradas();
     } catch (error) {
-      console.error('Erro ao registrar entrada:', error);
+      console.error('Erro ao processar entrada:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível registrar a entrada.',
+        description: editingEntrada ? 'Não foi possível atualizar a entrada.' : 'Não foi possível registrar a entrada.',
         variant: 'destructive',
       });
     }
   };
 
   const openCreateDialog = () => {
+    setEditingEntrada(null);
     form.reset({
       tipo: 'COMPRA',
       produtoId: '',
@@ -187,6 +206,44 @@ export default function EntradasPage() {
       numeroNota: '',
     });
     setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (entrada: Entrada) => {
+    setEditingEntrada(entrada);
+    form.reset({
+      tipo: entrada.tipo,
+      produtoId: entrada.produtoId,
+      fornecedorId: entrada.fornecedorId || '',
+      quantidade: entrada.quantidade,
+      valorUnitario: entrada.valorUnitario || (entrada.tipo === 'COMPRA' ? 1 : 0),
+      valorTotal: entrada.valorTotal || 0,
+      observacoes: entrada.observacoes || '',
+      dataEntrada: new Date(entrada.dataEntrada).toISOString().split('T')[0],
+      numeroNota: entrada.numeroNota || '',
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (entrada: Entrada) => {
+    if (!confirm(`Tem certeza que deseja excluir esta entrada de ${entrada.produto?.nome}?`)) {
+      return;
+    }
+
+    try {
+      await apiService.deleteEntrada(entrada.id);
+      toast({
+        title: 'Sucesso',
+        description: 'Entrada excluída com sucesso.',
+      });
+      loadEntradas();
+    } catch (error) {
+      console.error('Erro ao excluir entrada:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir a entrada.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Limpar fornecedor quando tipo não for COMPRA
@@ -416,6 +473,17 @@ export default function EntradasPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditDialog(entrada)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(entrada)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -454,9 +522,9 @@ export default function EntradasPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Nova Entrada</DialogTitle>
+            <DialogTitle>{editingEntrada ? 'Editar Entrada' : 'Nova Entrada'}</DialogTitle>
             <DialogDescription>
-              Registre uma nova entrada de produto no estoque.
+              {editingEntrada ? 'Edite os dados da entrada de produto.' : 'Registre uma nova entrada de produto no estoque.'}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -652,7 +720,9 @@ export default function EntradasPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit" onClick={() => console.log(form.getValues())}>Registrar Entrada</Button>
+                <Button type="submit">
+                  {editingEntrada ? 'Atualizar Entrada' : 'Registrar Entrada'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

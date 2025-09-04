@@ -85,9 +85,9 @@ const updateFornecedorSchema = z.object({
 });
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET - Buscar fornecedor por ID
@@ -96,7 +96,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const fornecedor = await prisma.fornecedor.findUnique({
       where: { id },
@@ -181,7 +181,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Validar dados de entrada
@@ -275,7 +275,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar se o fornecedor existe
     const existingFornecedor = await prisma.fornecedor.findUnique({

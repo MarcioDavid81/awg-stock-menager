@@ -14,9 +14,9 @@ const updateTalhaoSchema = z.object({
 });
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET - Buscar talhão por ID
@@ -25,7 +25,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const talhao = await prisma.talhao.findUnique({
       where: { id },
@@ -106,7 +106,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Validar dados de entrada
@@ -192,7 +192,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar se o talhão existe
     const existingTalhao = await prisma.talhao.findUnique({
