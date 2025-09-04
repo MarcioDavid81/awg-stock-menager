@@ -207,7 +207,7 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
