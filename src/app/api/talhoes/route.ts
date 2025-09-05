@@ -14,9 +14,6 @@ const createTalhaoSchema = z.object({
   ativo: z.boolean().default(true),
 });
 
-// Schema de validação para atualização de talhão
-const updateTalhaoSchema = createTalhaoSchema.partial();
-
 // GET - Listar todos os talhões
 export async function GET(request: NextRequest) {
   try {
