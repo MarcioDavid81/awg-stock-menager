@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID da fazenda não fornecido" },
+      { error: "ID do produto não fornecido" },
       { status: 400 }
     );
   }
@@ -109,7 +109,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID da fazenda não fornecido" },
+      { error: "ID do produto não fornecido" },
       { status: 400 }
     );
   }
@@ -210,7 +210,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID da fazenda não fornecido" },
+      { error: "ID do produto não fornecido" },
       { status: 400 }
     );
   }
