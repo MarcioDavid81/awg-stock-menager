@@ -1,12 +1,69 @@
 import { z } from 'zod';
 
 // Tipos base dos modelos
+export interface Company {
+  id: string;
+  name: string;
+  cnpj?: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  users: User[];
+  farms: Farm[];
+  talhoes: Talhao[];
+  fornecedores: Fornecedor[];
+  produtos: Produto[];
+  entradas: Entrada[];
+  saidas: Saida[];
+  estoques: Estoque[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  avatarUrl?: string;
+  role: 'ADMIN' | 'USER';
+  companyId?: string;
+  company?: Company;
+  farms: Farm[];
+  talhoes: Talhao[];
+  fornecedores: Fornecedor[];
+  produtos: Produto[];
+  entradas: Entrada[];
+  saidas: Saida[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Farm {
+  id: string;
+  name: string;
+  area: number;
+  userId: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
+  talhaos: Talhao[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Talhao {
   id: string;
   nome: string;
   area: number;
   localizacao?: string;
   observacoes?: string;
+  farmId?: string;
+  farm?: Farm;
+  userId?: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +76,10 @@ export interface Fornecedor {
   telefone?: string;
   email?: string;
   endereco?: string;
+  userId?: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +96,10 @@ export interface Produto {
   updatedAt: Date;
   fornecedorId?: string;
   fornecedor?: Fornecedor;
+  userId?: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
 }
 
 export interface Entrada {
@@ -52,6 +117,10 @@ export interface Entrada {
   produto?: Produto;
   fornecedorId?: string;
   fornecedor?: Fornecedor;
+  userId?: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
 }
 
 export interface Saida {
@@ -66,6 +135,10 @@ export interface Saida {
   produto?: Produto;
   talhaoId?: string;
   talhao?: Talhao;
+  userId?: string;
+  user?: User;
+  companyId?: string;
+  company?: Company;
 }
 
 export interface Estoque {
@@ -78,14 +151,41 @@ export interface Estoque {
   updatedAt: Date;
   produtoId: string;
   produto?: Produto;
+  companyId?: string;
+  company?: Company;
 }
 
 // Schemas Zod para validação de formulários
+export const companySchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  cnpj: z.string().optional(),
+  cpf: z.string().optional(),
+  email: z.string().email('Email inválido').optional(),
+  telefone: z.string().optional(),
+  endereco: z.string().optional(),
+});
+
+export const userSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  avatarUrl: z.string().optional(),
+  role: z.enum(['ADMIN', 'USER']),
+});
+
+export const farmSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  area: z.number().positive('Área deve ser um número positivo'),
+});
+
 export const talhaoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
   area: z.number().positive('Área deve ser um número positivo'),
   localizacao: z.string().optional(),
   observacoes: z.string().optional(),
+  farmId: z.string().optional(),
+  userId: z.string().optional(),
+  companyId: z.string().optional(),
 });
 
 // Função para validar CPF
@@ -156,6 +256,8 @@ export const fornecedorSchema = z.object({
   telefone: z.string().optional(),
   email: z.string().email('Email invalido').optional().or(z.literal('')),
   endereco: z.string().optional(),
+  userId: z.string().optional(),
+  companyId: z.string().optional(),
 }).refine((data) => {
   const hasCnpj = data.cnpj && data.cnpj.trim() !== '';
   const hasCpf = data.cpf && data.cpf.trim() !== '';
@@ -178,6 +280,8 @@ export const produtoSchema = z.object({
   unidade: z.string().min(1, 'Unidade é obrigatória'),
   observacoes: z.string().optional(),
   fornecedorId: z.string().optional(),
+  userId: z.string().optional(),
+  companyId: z.string().optional(),
 });
 
 export const entradaSchema = z.object({
@@ -190,6 +294,8 @@ export const entradaSchema = z.object({
   dataEntrada: z.string().optional(),
   produtoId: z.string().min(1, 'Produto é obrigatório'),
   fornecedorId: z.string().optional(),
+  userId: z.string().optional(),
+  companyId: z.string().optional(),
 }).refine((data) => {
   if (data.tipo === 'COMPRA' && !data.fornecedorId) {
     return false;
@@ -215,6 +321,8 @@ export const saidaSchema = z.object({
   dataSaida: z.string().optional(),
   produtoId: z.string().min(1, 'Produto é obrigatório'),
   talhaoId: z.string().optional(),
+  userId: z.string().optional(),
+  companyId: z.string().optional(),
 }).refine((data) => {
   if (data.tipo === 'APLICACAO' && !data.talhaoId) {
     return false;
@@ -226,6 +334,9 @@ export const saidaSchema = z.object({
 });
 
 // Tipos para formulários
+export type CompanyFormData = z.infer<typeof companySchema>;
+export type UserFormData = z.infer<typeof userSchema>;
+export type FarmFormData = z.infer<typeof farmSchema>;
 export type TalhaoFormData = z.infer<typeof talhaoSchema>;
 export type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 export type ProdutoFormData = z.infer<typeof produtoSchema>;
@@ -251,6 +362,27 @@ export interface PaginatedResponse<T> {
 }
 
 // Tipos para filtros
+export interface CompanyFilters {
+  name?: string;
+  cnpj?: string;
+  cpf?: string;
+  userId?: string;
+}
+
+export interface UserFilters {
+  name?: string;
+  email?: string;
+  cpf?: string;
+  cnpj?: string;
+}
+
+export interface FarmFilters {
+  name?: string;
+  cnpj?: string;
+  cpf?: string;
+  userId?: string;
+}
+
 export interface TalhaoFilters {
   nome?: string;
   areaMin?: number;

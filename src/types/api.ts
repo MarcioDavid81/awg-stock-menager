@@ -17,7 +17,41 @@ export enum StatusEstoque {
   ESTOQUE_OK = 'ESTOQUE_OK',
 }
 
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}
+
 // Interfaces base das entidades
+export interface Company {
+  id: string;
+  name: string;
+  cnpj?: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  ativo: boolean;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  avatarUrl?: string;
+  role: UserRole;
+  companyId: string;
+}
+
+export interface Farm {
+  id: string;
+  name: string
+  area: number;
+  companyId: string;
+  userId: string;
+}
+
 export interface Produto {
   id: string;
   nome: string;
@@ -26,6 +60,8 @@ export interface Produto {
   codigoBarras?: string;
   descricao?: string;
   ativo: boolean;
+  companyId: string;
+  userId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
@@ -37,6 +73,9 @@ export interface Talhao {
   localizacao?: string;
   observacoes?: string;
   ativo: boolean;
+  companyId: string;
+  userId: string;
+  farmId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
@@ -50,6 +89,8 @@ export interface Fornecedor {
   endereco?: string;
   observacoes?: string;
   ativo: boolean;
+  companyId: string;
+  userId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
@@ -65,6 +106,8 @@ export interface Entrada {
   dataEntrada: Date;
   produtoId: string;
   fornecedorId?: string;
+  companyId: string;
+  userId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
@@ -80,6 +123,8 @@ export interface Saida {
   produtoId: string;
   talhaoId?: string;
   criadoEm: Date;
+  companyId: string;
+  userId: string;
   atualizadoEm: Date;
 }
 
@@ -90,11 +135,64 @@ export interface Estoque {
   valorMedio?: number;
   ultimaAtualizacao: Date;
   produtoId: string;
+  companyId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
 // Interfaces para requests (DTOs)
+export interface CreateCompanyRequest {
+  name: string;
+  cnpj?: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  companyId: string;
+  userId: string;
+  ativo?: boolean;
+}
+
+export interface UpdateCompanyRequest {
+  name?: string;
+  cnpj?: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  ativo?: boolean;
+}
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  avatarUrl?: string;
+  role: UserRole;
+  companyId: string;
+}
+
+export interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  avatarUrl?: string;
+  role?: UserRole;
+  companyId?: string;
+}
+
+export interface CreateFarmRequest {
+  name: string;
+  area: number;
+  companyId: string;
+  userId: string;
+}
+
+export interface UpdateFarmRequest {
+  name?: string;
+  area?: number;
+}
+
 export interface CreateProdutoRequest {
   nome: string;
   categoria: string;
@@ -337,6 +435,7 @@ export type UpdateRequest<T> = Partial<Omit<T, 'id' | 'criadoEm' | 'atualizadoEm
 
 // Constantes
 export const UNIDADES_MEDIDA = [
+  'TON',
   'KG',
   'G',
   'L',
@@ -350,12 +449,14 @@ export const UNIDADES_MEDIDA = [
 ] as const;
 
 export const CATEGORIAS_PRODUTO = [
-  'Fertilizantes',
-  'Defensivos',
+  'Fertilizante',
+  'Corretivo',
+  'Fungicida',
+  'Inseticida',
+  'Herbicida',
   'Sementes',
-  'Ferramentas',
-  'Equipamentos',
-  'Combustíveis',
+  'Óleo Mineral',
+  'Adjuvante',
   'Outros',
 ] as const;
 

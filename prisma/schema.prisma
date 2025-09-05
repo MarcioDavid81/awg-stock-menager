@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,121 +8,188 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo para Talhões (locais de uso dos insumos)
+model Company {
+  id           String       @id @default(cuid())
+  name         String
+  cnpj         String?      @unique
+  cpf          String?      @unique
+  email        String?
+  telefone     String?
+  endereco     String?
+  ativo        Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  entradas     Entrada[]
+  estoques     Estoque[]
+  farms        Farm[]
+  fornecedores Fornecedor[]
+  produtos     Produto[]
+  saidas       Saida[]
+  talhoes      Talhao[]
+  users        User[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  password     String
+  avatarUrl    String?
+  role         Role         @default(USER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  companyId    String?
+  company      Company?     @relation(fields: [companyId], references: [id])
+  entradas     Entrada[]
+  farms        Farm[]
+  fornecedores Fornecedor[]
+  produtos     Produto[]
+  saidas       Saida[]
+  talhoes      Talhao[]
+
+  @@map("users")
+}
+
+model Farm {
+  id        String   @id @default(cuid())
+  name      String
+  area      Float?
+  companyId String
+  userId    String?
+  company   Company  @relation(fields: [companyId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+  talhoes   Talhao[]
+
+  @@map("farms")
+}
+
 model Talhao {
   id          String   @id @default(cuid())
   nome        String
   descricao   String?
-  area        Float?   // área em hectares
+  area        Float?
   localizacao String?
   ativo       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relacionamentos
-  saidas Saida[]
+  companyId   String?
+  userId      String?
+  farmId      String?
+  saidas      Saida[]
+  company     Company? @relation(fields: [companyId], references: [id])
+  farm        Farm?    @relation(fields: [farmId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
 
   @@map("talhoes")
 }
 
-// Modelo para Fornecedores
 model Fornecedor {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   nome      String
-  cnpj      String?  @unique
-  cpf       String?  @unique
+  cnpj      String?   @unique
+  cpf       String?   @unique
   email     String?
   telefone  String?
   endereco  String?
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relacionamentos
-  entradas Entrada[]
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  companyId String?
+  userId    String?
+  entradas  Entrada[]
+  company   Company?  @relation(fields: [companyId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
 
   @@map("fornecedores")
 }
 
-// Modelo para Produtos (insumos agrícolas)
 model Produto {
-  id          String   @id @default(cuid())
-  nome        String
-  descricao   String?
-  unidade     String   // kg, litros, unidades, etc.
-  categoria   String?  // fertilizante, defensivo, sementes, etc.
-  codigoBarras String? @unique
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relacionamentos
-  entradas Entrada[]
-  saidas   Saida[]
-  estoques Estoque[]
+  id           String    @id @default(cuid())
+  nome         String
+  descricao    String?
+  unidade      String
+  categoria    String?
+  codigoBarras String?   @unique
+  ativo        Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  companyId    String?
+  userId       String?
+  entradas     Entrada[]
+  estoques     Estoque?
+  company      Company?  @relation(fields: [companyId], references: [id])
+  user         User?     @relation(fields: [userId], references: [id])
+  saidas       Saida[]
 
   @@map("produtos")
 }
 
-// Modelo para Entradas (compras ou transferências positivas)
 model Entrada {
-  id           String      @id @default(cuid())
-  tipo         TipoEntrada // COMPRA ou TRANSFERENCIA_POSITIVA
-  quantidade   Float
+  id            String      @id @default(cuid())
+  tipo          TipoEntrada
+  quantidade    Float
   valorUnitario Float?
-  valorTotal   Float?
-  numeroNota   String?
-  observacoes  String?
-  dataEntrada  DateTime    @default(now())
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  // Relacionamentos
-  produtoId    String
-  produto      Produto    @relation(fields: [produtoId], references: [id])
-  fornecedorId String?
-  fornecedor   Fornecedor? @relation(fields: [fornecedorId], references: [id])
+  valorTotal    Float?
+  numeroNota    String?
+  observacoes   String?
+  dataEntrada   DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  companyId     String?
+  userId        String?
+  produtoId     String
+  fornecedorId  String?
+  company       Company?    @relation(fields: [companyId], references: [id])
+  fornecedor    Fornecedor? @relation(fields: [fornecedorId], references: [id])
+  produto       Produto     @relation(fields: [produtoId], references: [id])
+  user          User?       @relation(fields: [userId], references: [id])
 
   @@map("entradas")
 }
 
-// Modelo para Saídas (aplicações ou transferências negativas)
 model Saida {
   id          String    @id @default(cuid())
-  tipo        TipoSaida // APLICACAO ou TRANSFERENCIA_NEGATIVA
+  tipo        TipoSaida
   quantidade  Float
   observacoes String?
   dataSaida   DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  // Relacionamentos
-  produtoId String
-  produto   Produto @relation(fields: [produtoId], references: [id])
-  talhaoId  String?
-  talhao    Talhao? @relation(fields: [talhaoId], references: [id])
+  companyId   String?
+  userId      String?
+  produtoId   String
+  talhaoId    String?
+  company     Company?  @relation(fields: [companyId], references: [id])
+  produto     Produto   @relation(fields: [produtoId], references: [id])
+  talhao      Talhao?   @relation(fields: [talhaoId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
 
   @@map("saidas")
 }
 
-// Modelo para Estoque atual de cada produto
 model Estoque {
-  id               String   @id @default(cuid())
-  quantidade       Float    @default(0)
-  quantidadeMinima Float?   // estoque mínimo para alerta
-  valorMedio       Float?   // valor médio do estoque
+  id                String   @id @default(cuid())
+  quantidade        Float    @default(0)
+  quantidadeMinima  Float?
+  valorMedio        Float?
   ultimaAtualizacao DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relacionamentos
-  produtoId String  @unique
-  produto   Produto @relation(fields: [produtoId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  companyId         String?
+  produtoId         String   @unique
+  company           Company? @relation(fields: [companyId], references: [id])
+  produto           Produto  @relation(fields: [produtoId], references: [id])
 
   @@map("estoques")
 }
 
-// Enums para tipos de operações
+enum Role {
+  USER
+  ADMIN
+}
+
 enum TipoEntrada {
   COMPRA
   TRANSFERENCIA_POSITIVA
@@ -138,5 +199,3 @@ enum TipoSaida {
   APLICACAO
   TRANSFERENCIA_NEGATIVA
 }
-
-
