@@ -30,8 +30,7 @@ export async function POST(req: NextRequest) {
     const validatedData = createFazendaSchema.parse(body);
     const fazenda = await prisma.farm.create({
       data: {
-        name: validatedData.name,
-        area: validatedData.area,
+        ...validatedData,
         userId: userId,
         companyId: companyId,
       },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "../../../../generated/prisma";
 import { z } from "zod";
+import { verifyToken } from "../../../../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -22,11 +23,32 @@ interface RouteParams {
 
 // GET - Buscar produto por ID
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json(
+      { error: "ID da fazenda não fornecido" },
+      { status: 400 }
+    );
+  }
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { companyId } = payload;
   try {
-    const { id } = await params;
-
     const produto = await prisma.produto.findUnique({
-      where: { id },
+      where: {
+        id: id,
+        companyId: companyId,
+      },
       include: {
         estoques: true,
         entradas: {
@@ -84,13 +106,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT - Atualizar produto
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json(
+      { error: "ID da fazenda não fornecido" },
+      { status: 400 }
+    );
+  }
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { userId, companyId } = payload;
+  const body = await request.json();
+  const validatedData = updateProdutoSchema.parse(body);
   try {
-    const { id } = await params;
-    const body = await request.json();
-
-    // Validar dados de entrada
-    const validatedData = updateProdutoSchema.parse(body);
-
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
       where: { id },
@@ -128,7 +166,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Atualizar produto
     const produto = await prisma.produto.update({
-      where: { id },
+      where: {
+        id: id,
+        userId: userId,
+        companyId: companyId,
+      },
       data: validatedData,
       include: {
         estoques: true,
@@ -165,12 +207,35 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // DELETE - Excluir produto (soft delete)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json(
+      { error: "ID da fazenda não fornecido" },
+      { status: 400 }
+    );
+  }
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { userId, companyId } = payload;
   try {
-    const { id } = await params;
 
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
-      where: { id },
+      where: {
+        id: id,
+        userId: userId,
+        companyId: companyId,
+      },
       include: {
         entradas: true,
         saidas: true,
@@ -182,7 +247,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: "Produto não encontrado",
+          error: "Produto não encontrado ou não pertence ao usuário e à empresa",
         },
         { status: 404 }
       );
@@ -195,7 +260,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (temMovimentacoes) {
       // Se há movimentações, fazer soft delete
       const produto = await prisma.produto.update({
-        where: { id },
+        where: {
+          id: id,
+          userId: userId,
+          companyId: companyId,
+        },
         data: { ativo: false },
       });
 
@@ -207,11 +276,18 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } else {
       // Se não há movimentações, pode excluir completamente
       await prisma.estoque.deleteMany({
-        where: { produtoId: id },
+        where: {
+          produtoId: id,
+          companyId: companyId,
+        },
       });
 
       await prisma.produto.delete({
-        where: { id },
+        where: {
+          id: id,
+          userId: userId,
+          companyId: companyId,
+        },
       });
 
       return NextResponse.json({

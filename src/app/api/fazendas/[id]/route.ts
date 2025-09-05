@@ -40,6 +40,19 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const body = await req.json();
   const validatedData = updateFazendaSchema.parse(body);
   try {
+    const existingFarm = await prisma.farm.findUnique({
+      where: {
+        id: id,
+        userId: userId,
+        companyId: companyId,
+      },
+    });
+    if (!existingFarm) {
+      return NextResponse.json(
+        { error: "Fazenda não encontrada" },
+        { status: 404 }
+      );
+    }
     const fazenda = await prisma.farm.update({
       where: {
         id: id,
