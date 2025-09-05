@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "../../../../generated/prisma";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
 
 // Schema de validação para atualização de produto
 const updateProdutoSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório').optional(),
+  nome: z.string().min(1, "Nome é obrigatório").optional(),
   descricao: z.string().optional(),
-  unidade: z.string().min(1, 'Unidade é obrigatória').optional(),
+  unidade: z.string().min(1, "Unidade é obrigatória").optional(),
   categoria: z.string().optional(),
   codigoBarras: z.string().optional(),
   ativo: z.boolean().optional(),
@@ -21,13 +21,10 @@ interface RouteParams {
 }
 
 // GET - Buscar produto por ID
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    
+
     const produto = await prisma.produto.findUnique({
       where: { id },
       include: {
@@ -37,7 +34,7 @@ export async function GET(
             fornecedor: true,
           },
           orderBy: {
-            dataEntrada: 'desc',
+            dataEntrada: "desc",
           },
           take: 10, // Últimas 10 entradas
         },
@@ -46,7 +43,7 @@ export async function GET(
             talhao: true,
           },
           orderBy: {
-            dataSaida: 'desc',
+            dataSaida: "desc",
           },
           take: 10, // Últimas 10 saídas
         },
@@ -58,27 +55,27 @@ export async function GET(
         },
       },
     });
-    
+
     if (!produto) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Produto não encontrado',
+          error: "Produto não encontrado",
         },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json({
       success: true,
       data: produto,
     });
   } catch (error) {
-    console.error('Erro ao buscar produto:', error);
+    console.error("Erro ao buscar produto:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor',
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );
@@ -86,49 +83,49 @@ export async function GET(
 }
 
 // PUT - Atualizar produto
-export async function PUT(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     // Validar dados de entrada
     const validatedData = updateProdutoSchema.parse(body);
-    
+
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
       where: { id },
     });
-    
+
     if (!existingProduto) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Produto não encontrado',
+          error: "Produto não encontrado",
         },
         { status: 404 }
       );
     }
-    
+
     // Verificar se já existe produto com mesmo código de barras (se fornecido)
-    if (validatedData.codigoBarras && validatedData.codigoBarras !== existingProduto.codigoBarras) {
+    if (
+      validatedData.codigoBarras &&
+      validatedData.codigoBarras !== existingProduto.codigoBarras
+    ) {
       const produtoComMesmoCodigo = await prisma.produto.findUnique({
         where: { codigoBarras: validatedData.codigoBarras },
       });
-      
+
       if (produtoComMesmoCodigo) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Já existe um produto com este código de barras',
+            error: "Já existe um produto com este código de barras",
           },
           { status: 400 }
         );
       }
     }
-    
+
     // Atualizar produto
     const produto = await prisma.produto.update({
       where: { id },
@@ -137,29 +134,29 @@ export async function PUT(
         estoques: true,
       },
     });
-    
+
     return NextResponse.json({
       success: true,
       data: produto,
-      message: 'Produto atualizado com sucesso',
+      message: "Produto atualizado com sucesso",
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Dados inválidos',
+          error: "Dados inválidos",
           details: error,
         },
         { status: 400 }
       );
     }
-    
-    console.error('Erro ao atualizar produto:', error);
+
+    console.error("Erro ao atualizar produto:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor',
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );
@@ -167,13 +164,10 @@ export async function PUT(
 }
 
 // DELETE - Excluir produto (soft delete)
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    
+
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
       where: { id },
@@ -183,53 +177,54 @@ export async function DELETE(
         estoques: true,
       },
     });
-    
+
     if (!existingProduto) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Produto não encontrado',
+          error: "Produto não encontrado",
         },
         { status: 404 }
       );
     }
-    
+
     // Verificar se há movimentações associadas
-    const temMovimentacoes = existingProduto.entradas.length > 0 || existingProduto.saidas.length > 0;
-    
+    const temMovimentacoes =
+      existingProduto.entradas.length > 0 || existingProduto.saidas.length > 0;
+
     if (temMovimentacoes) {
       // Se há movimentações, fazer soft delete
       const produto = await prisma.produto.update({
         where: { id },
         data: { ativo: false },
       });
-      
+
       return NextResponse.json({
         success: true,
         data: produto,
-        message: 'Produto desativado com sucesso (possui movimentações)',
+        message: "Produto desativado com sucesso (possui movimentações)",
       });
     } else {
       // Se não há movimentações, pode excluir completamente
       await prisma.estoque.deleteMany({
         where: { produtoId: id },
       });
-      
+
       await prisma.produto.delete({
         where: { id },
       });
-      
+
       return NextResponse.json({
         success: true,
-        message: 'Produto excluído com sucesso',
+        message: "Produto excluído com sucesso",
       });
     }
   } catch (error) {
-    console.error('Erro ao excluir produto:', error);
+    console.error("Erro ao excluir produto:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor',
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );
