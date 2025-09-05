@@ -15,8 +15,7 @@ const createProdutoSchema = z.object({
   ativo: z.boolean().default(true),
 });
 
-// Schema de validação para atualização de produto
-const updateProdutoSchema = createProdutoSchema.partial();
+
 
 // GET - Listar todos os produtos
 export async function GET(request: NextRequest) {
