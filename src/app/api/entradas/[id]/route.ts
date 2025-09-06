@@ -79,7 +79,7 @@ async function reverterEstoque(
     }
 
     await prisma.estoque.update({
-      where: { produtoId },
+      where: { produtoId, companyId },
       data: {
         quantidade: novaQuantidade,
         valorMedio: novoValorMedio,
@@ -124,7 +124,7 @@ async function atualizarEstoque(
     }
 
     await prisma.estoque.update({
-      where: { produtoId },
+      where: { produtoId, companyId },
       data: {
         quantidade: estoque.quantidade + quantidade,
         valorMedio: novoValorMedio,
@@ -314,6 +314,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       const entrada = await tx.entrada.update({
         where: { 
           id,
+          userId,
+          companyId,
          },
         data: {
           ...validatedData,
