@@ -1,33 +1,65 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../../../lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "../../../../../lib/prisma";
+import { verifyToken } from "../../../../../lib/auth";
 
 export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { companyId } = payload;
   try {
     // Obter estatísticas do dashboard
-    const [totalProdutos, totalTalhoes, totalFornecedores, estoques, entradas, saidas] = await Promise.all([
-      prisma.produto.count({ where: { ativo: true } }),
-      prisma.talhao.count({ where: { ativo: true } }),
-      prisma.fornecedor.count({ where: { ativo: true } }),
+    const [
+      totalProdutos,
+      totalTalhoes,
+      totalFornecedores,
+      estoques,
+      entradas,
+      saidas,
+    ] = await Promise.all([
+      prisma.produto.count({
+        where: { ativo: true, companyId },
+      }),
+      prisma.talhao.count({
+        where: { ativo: true, companyId },
+      }),
+      prisma.fornecedor.count({
+        where: { ativo: true, companyId },
+      }),
       prisma.estoque.findMany({
+        where: {
+          companyId,
+        },
         include: {
-          produto: true
-        }
+          produto: true,
+        },
       }),
       prisma.entrada.findMany({
         where: {
+          companyId,
           dataEntrada: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-          }
-        }
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
       }),
       prisma.saida.findMany({
         where: {
+          companyId,
           dataSaida: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-          }
-        }
-      })
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
     ]);
 
     // Calcular produtos com estoque baixo
@@ -39,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Calcular valor total do estoque
     const valorTotalEstoque = estoques.reduce((total: number, estoque) => {
       const valorMedio = estoque.valorMedio || 0;
-      return total + (estoque.quantidade * valorMedio);
+      return total + estoque.quantidade * valorMedio;
     }, 0);
 
     const stats = {
@@ -49,19 +81,19 @@ export async function GET(request: NextRequest) {
       produtosEstoqueBaixo,
       entradasMes: entradas.length,
       saidasMes: saidas.length,
-      valorTotalEstoque
+      valorTotalEstoque,
     };
 
     return NextResponse.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
-    console.error('Erro ao buscar estatísticas do dashboard:', error);
+    console.error("Erro ao buscar estatísticas do dashboard:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor'
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );

@@ -1,124 +1,153 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../generated/prisma';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "../../../generated/prisma";
+import { verifyToken } from "../../../../lib/auth";
 
 const prisma = new PrismaClient();
 
 // GET - Consultar estoque atual com filtros
 export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { companyId } = payload;
   try {
     const { searchParams } = new URL(request.url);
-    
+
     // Parâmetros de filtro
-    const produtoId = searchParams.get('produtoId');
-    const categoria = searchParams.get('categoria');
-    const search = searchParams.get('search');
-    const estoqueMinimo = searchParams.get('estoqueMinimo');
-    const estoqueMaximo = searchParams.get('estoqueMaximo');
-    const valorMinimo = searchParams.get('valorMinimo');
-    const valorMaximo = searchParams.get('valorMaximo');
-    const somenteComEstoque = searchParams.get('somenteComEstoque') === 'true';
-    const somenteEstoqueBaixo = searchParams.get('somenteEstoqueBaixo') === 'true';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const produtoId = searchParams.get("produtoId");
+    const categoria = searchParams.get("categoria");
+    const search = searchParams.get("search");
+    const estoqueMinimo = searchParams.get("estoqueMinimo");
+    const estoqueMaximo = searchParams.get("estoqueMaximo");
+    const valorMinimo = searchParams.get("valorMinimo");
+    const valorMaximo = searchParams.get("valorMaximo");
+    const somenteComEstoque = searchParams.get("somenteComEstoque") === "true";
+    const somenteEstoqueBaixo =
+      searchParams.get("somenteEstoqueBaixo") === "true";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
-    
+
     // Construir filtros para produtos
     const produtoWhere: any = {
+      companyId,
       ativo: true,
     };
-    
+
     if (categoria) {
       produtoWhere.categoria = {
         contains: categoria,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
-    
+
     if (search) {
       produtoWhere.OR = [
         {
           nome: {
             contains: search,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
         {
           categoria: {
             contains: search,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
         {
           codigoBarras: {
             contains: search,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
       ];
     }
-    
+
     // Construir filtros para estoque
-    const estoqueWhere: any = {};
-    
+    const estoqueWhere: any = {
+      companyId,
+    };
+
     if (produtoId) {
       estoqueWhere.produtoId = produtoId;
     }
-    
+
     if (estoqueMinimo !== null && estoqueMinimo !== undefined) {
       estoqueWhere.quantidade = {
         ...estoqueWhere.quantidade,
         gte: parseFloat(estoqueMinimo),
       };
     }
-    
+
     if (estoqueMaximo !== null && estoqueMaximo !== undefined) {
       estoqueWhere.quantidade = {
         ...estoqueWhere.quantidade,
         lte: parseFloat(estoqueMaximo),
       };
     }
-    
+
     if (valorMinimo !== null && valorMinimo !== undefined) {
       estoqueWhere.valorMedio = {
         ...estoqueWhere.valorMedio,
         gte: parseFloat(valorMinimo),
       };
     }
-    
+
     if (valorMaximo !== null && valorMaximo !== undefined) {
       estoqueWhere.valorMedio = {
         ...estoqueWhere.valorMedio,
         lte: parseFloat(valorMaximo),
       };
     }
-    
+
     if (somenteComEstoque) {
       estoqueWhere.quantidade = {
         ...estoqueWhere.quantidade,
         gt: 0,
       };
     }
-    
+
     if (somenteEstoqueBaixo) {
       // Filtrar produtos com estoque abaixo do mínimo
       const produtosComEstoqueBaixo = await prisma.estoque.findMany({
         where: {
           ...estoqueWhere,
+          companyId,
         },
         include: {
-          produto: true,
+          produto: {
+            include: {
+              _count: {
+                select: {
+                  entradas: true,
+                  saidas: true,
+                },
+              },
+            },
+          },
         },
       });
-      
+
       const produtosFiltrados = produtosComEstoqueBaixo.filter(
-        (estoque: any) => 
+        (estoque: any) =>
           estoque.quantidade < (estoque.produto.quantidadeMinima || 0)
       );
-      
-      const produtoIds = produtosFiltrados.map((estoque: any) => estoque.produtoId);
-      
+
+      const produtoIds = produtosFiltrados.map(
+        (estoque: any) => estoque.produtoId
+      );
+
       if (produtoIds.length === 0) {
         return NextResponse.json({
           success: true,
@@ -138,12 +167,12 @@ export async function GET(request: NextRequest) {
           },
         });
       }
-      
+
       estoqueWhere.produtoId = {
         in: produtoIds,
       };
     }
-    
+
     // Buscar estoque com paginação
     const [estoques, total] = await Promise.all([
       prisma.estoque.findMany({
@@ -162,11 +191,11 @@ export async function GET(request: NextRequest) {
         },
         orderBy: [
           {
-            quantidade: 'asc',
+            quantidade: "asc",
           },
           {
             produto: {
-              nome: 'asc',
+              nome: "asc",
             },
           },
         ],
@@ -177,10 +206,12 @@ export async function GET(request: NextRequest) {
         where: estoqueWhere,
       }),
     ]);
-    
+
     // Filtrar estoques que têm produtos válidos
-    const estoquesValidos = estoques.filter((estoque: any) => estoque.produto !== null);
-    
+    const estoquesValidos = estoques.filter(
+      (estoque: any) => estoque.produto !== null
+    );
+
     // Calcular resumo do estoque
     const resumoEstoque = await prisma.estoque.aggregate({
       where: estoqueWhere,
@@ -191,45 +222,58 @@ export async function GET(request: NextRequest) {
         id: true,
       },
     });
-    
+
     // Calcular valor total do estoque
     const valorTotalEstoque = estoquesValidos.reduce(
-      (total: number, estoque: any) => total + (estoque.quantidade * (estoque.valorMedio || 0)),
+      (total: number, estoque: any) =>
+        total + estoque.quantidade * (estoque.valorMedio || 0),
       0
     );
-    
+
     // Contar produtos sem estoque
     const produtosSemEstoque = await prisma.estoque.count({
       where: {
         quantidade: 0,
+        companyId,
       },
     });
-    
+
     // Contar produtos com estoque baixo
     const todosEstoques = await prisma.estoque.findMany({
+      where: {
+        companyId,
+      },
       include: {
-        produto: true,
+        produto: {
+          include: {
+            estoques: true,
+          },
+        },
       },
     });
-    
+
     const produtosEstoqueBaixo = todosEstoques.filter(
       (estoque: any) => estoque.quantidade < (estoque.quantidadeMinima || 0)
     ).length;
-    
+
     // Enriquecer dados com informações calculadas
     const estoquesEnriquecidos = estoquesValidos.map((estoque: any) => ({
       ...estoque,
       valorTotalItem: estoque.quantidade * (estoque.valorMedio || 0),
-      statusEstoque: estoque.quantidade === 0 
-        ? 'SEM_ESTOQUE' 
-        : estoque.quantidade < (estoque.quantidadeMinima || 0)
-        ? 'ESTOQUE_BAIXO'
-        : 'ESTOQUE_OK',
-      diasUltimaMovimentacao: estoque.ultimaAtualizacao 
-        ? Math.floor((new Date().getTime() - estoque.ultimaAtualizacao.getTime()) / (1000 * 60 * 60 * 24))
+      statusEstoque:
+        estoque.quantidade === 0
+          ? "SEM_ESTOQUE"
+          : estoque.quantidade < (estoque.quantidadeMinima || 0)
+          ? "ESTOQUE_BAIXO"
+          : "ESTOQUE_OK",
+      diasUltimaMovimentacao: estoque.ultimaAtualizacao
+        ? Math.floor(
+            (new Date().getTime() - estoque.ultimaAtualizacao.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
         : null,
     }));
-    
+
     return NextResponse.json({
       success: true,
       data: estoquesEnriquecidos,
@@ -248,11 +292,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Erro ao consultar estoque:', error);
+    console.error("Erro ao consultar estoque:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor',
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );
@@ -261,50 +305,75 @@ export async function GET(request: NextRequest) {
 
 // POST - Ajustar estoque manualmente (inventário)
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { companyId } = payload;
+  
   try {
     const body = await request.json();
     const { produtoId, quantidadeAjuste, motivo, observacoes } = body;
-    
+
     if (!produtoId || quantidadeAjuste === undefined) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Produto ID e quantidade de ajuste são obrigatórios',
+          error: "Produto ID e quantidade de ajuste são obrigatórios",
         },
         { status: 400 }
       );
     }
-    
-    // Verificar se o produto existe
-    const produto = await prisma.produto.findUnique({
-      where: { id: produtoId },
+
+    // Verificar se o produto existe e pertence à empresa
+    const produto = await prisma.produto.findFirst({
+      where: { 
+        id: produtoId,
+        companyId,
+      },
     });
-    
+
     if (!produto) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Produto não encontrado',
+          error: "Produto não encontrado ou não pertence à empresa",
         },
         { status: 404 }
       );
     }
-    
+
     // Buscar estoque atual
-    const estoque = await prisma.estoque.findUnique({
-      where: { produtoId },
+    const estoque = await prisma.estoque.findFirst({
+      where: { 
+        produtoId,
+        companyId,
+      },
     });
-    
+
     const quantidadeAnterior = estoque?.quantidade || 0;
     const novaQuantidade = Math.max(0, quantidadeAnterior + quantidadeAjuste);
-    
+
     // Usar transação para garantir consistência
     const resultado = await prisma.$transaction(async (tx: any) => {
       // Atualizar ou criar estoque
       let estoqueAtualizado;
       if (estoque) {
         estoqueAtualizado = await tx.estoque.update({
-          where: { produtoId },
+          where: { 
+            produtoId_companyId: {
+              produtoId,
+              companyId,
+            },
+          },
           data: {
             quantidade: novaQuantidade,
             ultimaAtualizacao: new Date(),
@@ -317,6 +386,7 @@ export async function POST(request: NextRequest) {
         estoqueAtualizado = await tx.estoque.create({
           data: {
             produtoId,
+            companyId,
             quantidade: novaQuantidade,
             valorMedio: 0,
           },
@@ -325,37 +395,44 @@ export async function POST(request: NextRequest) {
           },
         });
       }
-      
+
       // Registrar ajuste como entrada ou saída dependendo do tipo
       if (quantidadeAjuste > 0) {
         await tx.entrada.create({
           data: {
-            tipo: 'TRANSFERENCIA_POSITIVA',
+            tipo: "TRANSFERENCIA_POSITIVA",
             quantidade: quantidadeAjuste,
             valorUnitario: estoqueAtualizado.valorMedio || 0,
             valorTotal: (estoqueAtualizado.valorMedio || 0) * quantidadeAjuste,
-            observacoes: `Ajuste de inventário: ${motivo || 'Não informado'}. ${observacoes || ''}`,
+            observacoes: `Ajuste de inventário: ${motivo || "Não informado"}. ${
+              observacoes || ""
+            }`,
             produtoId,
+            companyId,
             fornecedorId: null,
           },
         });
       } else if (quantidadeAjuste < 0) {
         await tx.saida.create({
           data: {
-            tipo: 'TRANSFERENCIA_NEGATIVA',
+            tipo: "TRANSFERENCIA_NEGATIVA",
             quantidade: Math.abs(quantidadeAjuste),
             valorUnitario: estoqueAtualizado.valorMedio || 0,
-            valorTotal: (estoqueAtualizado.valorMedio || 0) * Math.abs(quantidadeAjuste),
-            observacoes: `Ajuste de inventário: ${motivo || 'Não informado'}. ${observacoes || ''}`,
+            valorTotal:
+              (estoqueAtualizado.valorMedio || 0) * Math.abs(quantidadeAjuste),
+            observacoes: `Ajuste de inventário: ${motivo || "Não informado"}. ${
+              observacoes || ""
+            }`,
             produtoId,
+            companyId,
             talhaoId: null,
           },
         });
       }
-      
+
       return estoqueAtualizado;
     });
-    
+
     return NextResponse.json(
       {
         success: true,
@@ -365,16 +442,16 @@ export async function POST(request: NextRequest) {
           quantidadeAjuste,
           novaQuantidade,
         },
-        message: 'Estoque ajustado com sucesso',
+        message: "Estoque ajustado com sucesso",
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Erro ao ajustar estoque:', error);
+    console.error("Erro ao ajustar estoque:", error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Erro interno do servidor',
+        error: "Erro interno do servidor",
       },
       { status: 500 }
     );

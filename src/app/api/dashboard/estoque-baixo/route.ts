@@ -1,8 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from "../../../../../lib/auth";
 import prisma from '../../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Token não enviado ou mal formatado" },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.split(" ")[1];
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+  const { companyId } = payload;
   try {
     // Buscar produtos com estoque baixo
     const estoques = await prisma.estoque.findMany({
@@ -12,15 +26,16 @@ export async function GET(request: NextRequest) {
             id: true,
             nome: true,
             categoria: true,
-            unidade: true
-          }
-        }
+            unidade: true,
+          },
+        },
       },
       where: {
+        companyId,
         produto: {
-          ativo: true
-        }
-      }
+          ativo: true,
+        },
+      },
     });
 
     // Filtrar produtos com estoque baixo e calcular diferença
