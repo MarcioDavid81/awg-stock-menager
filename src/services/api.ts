@@ -1,4 +1,7 @@
 import {
+  Company,
+  User,
+  Farm,
   Talhao,
   Fornecedor,
   Produto,
@@ -7,11 +10,17 @@ import {
   Estoque,
   ApiResponse,
   PaginatedResponse,
+  CompanyFormData,
+  UserFormData,
+  FarmFormData,
   TalhaoFormData,
   FornecedorFormData,
   ProdutoFormData,
   EntradaFormData,
   SaidaFormData,
+  CompanyFilters,
+  UserFilters,
+  FarmFilters,
   TalhaoFilters,
   FornecedorFilters,
   ProdutoFilters,
@@ -26,14 +35,21 @@ import {
 const API_BASE_URL = '/api';
 
 class ApiService {
+  private getAuthHeaders(): HeadersInit {
+    return {
+      'Content-Type': 'application/json',
+    };
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    requireAuth = true
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(requireAuth ? this.getAuthHeaders() : { 'Content-Type': 'application/json' }),
         ...options.headers,
       },
       ...options,
@@ -47,6 +63,144 @@ class ApiService {
     }
 
     return response.json();
+  }
+
+  // Autenticação
+  async login(email: string, password: string): Promise<{ success: boolean; token?: string; message: string; error?: string }> {
+    const response = await this.request<{ success: boolean; token?: string; message: string; error?: string }>('/autenticacao/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }, false);
+    
+    return response;
+  }
+
+  async logout(): Promise<void> {
+    // O logout será feito via endpoint da API que removerá o cookie
+    await this.request('/autenticacao/logout', {
+      method: 'POST',
+    });
+  }
+
+
+  // Companias
+  async getCompanies(filters?: CompanyFilters, page = 1, limit = 10): Promise<PaginatedResponse<Company>> {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    return this.request(`/companias?${params}`);
+  }
+
+  async getCompany(id: string): Promise<ApiResponse<Company>> {
+    return this.request(`/companias/${id}`);
+  }
+
+  async createCompany(data: CompanyFormData): Promise<ApiResponse<Company>> {
+    return this.request('/companias', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCompany(id: string, data: Partial<CompanyFormData>): Promise<ApiResponse<Company>> {
+    return this.request(`/companias/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompany(id: string): Promise<ApiResponse<void>> {
+    return this.request(`/companias/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Users
+  async getUsers(filters?: UserFilters, page = 1, limit = 10): Promise<PaginatedResponse<User>> {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    return this.request(`/usuarios?${params}`);
+  }
+
+  async getUser(id: string): Promise<ApiResponse<User>> {
+    return this.request(`/usuarios/${id}`);
+  }
+
+  async createUser(data: UserFormData): Promise<ApiResponse<User>> {
+    return this.request('/usuarios', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(id: string, data: Partial<UserFormData>): Promise<ApiResponse<User>> {
+    return this.request(`/usuarios/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id: string): Promise<ApiResponse<void>> {
+    return this.request(`/usuarios/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Fazendas
+  async getFazendas(filters?: FarmFilters, page = 1, limit = 10): Promise<PaginatedResponse<Farm>> {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    return this.request(`/fazendas?${params}`);
+  }
+
+  async getFazenda(id: string): Promise<ApiResponse<Farm>> {
+    return this.request(`/fazendas/${id}`);
+  }
+
+  async createFazenda(data: FarmFormData): Promise<ApiResponse<Farm>> {
+    return this.request('/fazendas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateFazenda(id: string, data: Partial<FarmFormData>): Promise<ApiResponse<Farm>> {
+    return this.request(`/fazendas/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFazenda(id: string): Promise<ApiResponse<void>> {
+    return this.request(`/fazendas/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Talhões
