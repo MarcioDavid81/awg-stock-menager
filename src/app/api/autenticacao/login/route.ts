@@ -1,8 +1,8 @@
 import { compare } from "bcrypt";
 import { SignJWT } from "jose";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
 import { setCookie } from "nookies";
+import { PrismaClient } from "../../../../generated/prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -44,12 +44,12 @@ export async function POST(req: Request) {
     userId: user.id,
     companyId: user.companyId,
   })
-  .setProtectedHeader({
-    alg: "HS256",
-    typ: "JWT",
-  })
-  .setExpirationTime("1h")
-  .sign(getJwtSecretKey());
+    .setProtectedHeader({
+      alg: "HS256",
+      typ: "JWT",
+    })
+    .setExpirationTime("1h")
+    .sign(getJwtSecretKey());
   const response = NextResponse.json(
     {
       success: true,
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   setCookie({ res: response }, "awg-stock-menager-token", token, {
     httpOnly: true,
     path: "/",
-    maxAge: 60 * 60,
-  })
+    maxAge: 60 * 60 * 24,
+  });
   return response;
 }

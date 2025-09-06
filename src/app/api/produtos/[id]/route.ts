@@ -91,6 +91,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       data: produto,
+      message: "Produto encontrado com sucesso",
     });
   } catch (error) {
     console.error("Erro ao buscar produto:", error);
@@ -131,7 +132,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
-      where: { id },
+      where: { 
+        id: id,
+        companyId: companyId,
+       },
     });
 
     if (!existingProduto) {
@@ -150,14 +154,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       validatedData.codigoBarras !== existingProduto.codigoBarras
     ) {
       const produtoComMesmoCodigo = await prisma.produto.findUnique({
-        where: { codigoBarras: validatedData.codigoBarras },
+        where: {
+          codigoBarras: validatedData.codigoBarras,
+          companyId: companyId,
+        },
       });
 
       if (produtoComMesmoCodigo) {
         return NextResponse.json(
           {
             success: false,
-            error: "Já existe um produto com este código de barras",
+            error: "Já existe nesta empresa um produto com este código de barras",
           },
           { status: 400 }
         );
@@ -228,7 +235,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
   const { userId, companyId } = payload;
   try {
-
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
       where: {
@@ -247,7 +253,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: "Produto não encontrado ou não pertence ao usuário e à empresa",
+          error:
+            "Produto não encontrado, ou não pertence ao usuário e à empresa",
         },
         { status: 404 }
       );

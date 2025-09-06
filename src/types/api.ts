@@ -83,7 +83,8 @@ export interface Talhao {
 export interface Fornecedor {
   id: string;
   nome: string;
-  cpfCnpj: string;
+  cnpj?: string;
+  cpf?: string;
   email?: string;
   telefone?: string;
   endereco?: string;
