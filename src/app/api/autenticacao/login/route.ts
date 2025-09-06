@@ -1,7 +1,6 @@
 import { compare } from "bcrypt";
 import { SignJWT } from "jose";
 import { NextResponse } from "next/server";
-import { setCookie } from "nookies";
 import { PrismaClient } from "../../../../generated/prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -58,7 +57,7 @@ export async function POST(req: Request) {
     },
     { status: 200 }
   );
-  setCookie({ res: response }, "awg-stock-menager-token", token, {
+  response.cookies.set("awg-stock-menager-token", token, {
     httpOnly: true,
     path: "/",
     maxAge: 60 * 60 * 24,
