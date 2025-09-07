@@ -1,34 +1,33 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Package,
-  Users,
-  MapPin,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Warehouse,
-  Menu,
-  LogOut,
-  Loader2,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
-import { useState } from "react";
-import { Separator } from "../ui/separator";
-import logo from "../../../public/dr agenda.png";
-import Image from "next/image";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
-import { useRouter } from "next/navigation";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  MapPin,
+  Menu,
+  Package,
+  Users,
+  Warehouse,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import logo from "../../../public/dr agenda.png";
+import { Separator } from "../ui/separator";
 
 const navigation = [
   {
@@ -79,24 +78,31 @@ export function Sidebar({ className }: SidebarProps) {
 
   const handleLogout = async () => {
     setLoading(true);
-    try{
+    try {
       await apiService.logout();
       toast.success("Sair realizado com sucesso!");
       router.push("/");
-    }catch(error){
-      console.error(error)
+    } catch (error) {
+      console.error(error);
       toast.error("Erro ao sair. Tente novamente.");
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={cn("pb-12 min-h-screen bg-green-50 flex flex-col justify-between", className)}>
+    <div
+      className={cn(
+        "pb-12 min-h-screen bg-green-50 flex flex-col justify-between",
+        className
+      )}
+    >
       <div className="space-y-4 py-4">
         <div className="px-3">
           <div className="flex items-center justify-center">
-            <Image src={logo} alt="logo" width={200} height={150} />
+            <Link href="/">
+              <Image src={logo} alt="logo" width={200} height={150} />
+            </Link>
           </div>
           <Separator />
           <div className="mt-2 space-y-1">
@@ -123,11 +129,7 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
       <Separator />
       <div className="px-3">
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={handleLogout}
-        >
+        <Button variant="outline" className="w-full" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           {loading ? <Loader2 className="animate-spin" /> : "Sair"}
         </Button>

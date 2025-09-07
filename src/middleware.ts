@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { NextRequest, NextResponse } from "next/server";
 import { getJwtSecretKey } from "../lib/auth";
 
 export async function middleware(request: NextRequest) {
@@ -9,19 +9,31 @@ export async function middleware(request: NextRequest) {
   console.log("[middleware] Path:", pathname);
   console.log("[middleware] Token presente?", !!token);
 
-  const publicPaths = ["/", "/login"];
+  // Páginas que não requerem autenticação
+  const publicPaths = ["/"];
 
-  if (publicPaths.includes(pathname)) {
+  // Página de login - redireciona para dashboard se já estiver logado
+  if (pathname === "/login") {
     if (token) {
       try {
         await jwtVerify(token, getJwtSecretKey());
-        console.log("[middleware] Token válido, redirecionando para /dashboard");
+        console.log(
+          "[middleware] Usuário já logado, redirecionando para /dashboard"
+        );
         return NextResponse.redirect(new URL("/dashboard", request.url));
       } catch (err) {
-        console.log("[middleware] Token inválido, continua na página pública", err);
+        console.log(
+          "[middleware] Token inválido, permitindo acesso ao login",
+          err
+        );
         return NextResponse.next();
       }
     }
+    return NextResponse.next();
+  }
+
+  // Outras páginas públicas
+  if (publicPaths.includes(pathname)) {
     return NextResponse.next();
   }
 
@@ -41,5 +53,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [ "/dashboard", "/entradas", "/estoque", "/fornecedores", "/produtos", "/saidas", "/talhoes" ],
+  matcher: [
+    "/login",
+    "/dashboard",
+    "/entradas",
+    "/estoque",
+    "/fornecedores",
+    "/produtos",
+    "/saidas",
+    "/talhoes",
+  ],
 };
