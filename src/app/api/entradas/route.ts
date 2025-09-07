@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../generated/prisma';
 import { z } from 'zod';
-import { verifyToken } from '../../../../lib/auth';
+import { authenticateRequest } from '../../../../lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -81,19 +81,11 @@ async function atualizarEstoque(produtoId: string, companyId: string, quantidade
 
 // POST - Criar nova entrada
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
-      { status: 401 }
-    );
+  const auth = await authenticateRequest(request);
+  if (!auth.success) {
+    return auth.response!;
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId, userId } = payload;
+  const { companyId, userId } = auth.payload!;
   try {
     const body = await request.json();
     
@@ -203,19 +195,11 @@ export async function POST(request: NextRequest) {
 
 // GET - Listar todas as entradas
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
-      { status: 401 }
-    );
+  const auth = await authenticateRequest(request);
+  if (!auth.success) {
+    return auth.response!;
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = auth.payload!;
   try {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get('tipo');

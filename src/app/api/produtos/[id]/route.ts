@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "../../../../generated/prisma";
 import { z } from "zod";
-import { verifyToken } from "../../../../../lib/auth";
+import { authenticateRequest } from "../../../../../lib/api-auth";
 
 const prisma = new PrismaClient();
 
@@ -26,23 +26,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do produto não fornecido" },
+      { error: "ID do fornecedor não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const produto = await prisma.produto.findUnique({
       where: {
@@ -110,23 +108,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do produto não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { companyId, userId } = authResult.payload;
   const body = await request.json();
   const validatedData = updateProdutoSchema.parse(body);
   try {
@@ -217,23 +213,21 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do produto não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { userId, companyId } = authResult.payload;
   try {
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({

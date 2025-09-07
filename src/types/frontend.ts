@@ -161,18 +161,23 @@ export const companySchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   cnpj: z.string().optional(),
   cpf: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
+  email: z.string().optional(),
   telefone: z.string().optional(),
   endereco: z.string().optional(),
 });
 
 export const userSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  email: z.string().min(1, 'Email é obrigatório'),
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
   avatarUrl: z.string().optional(),
   role: z.enum(['ADMIN', 'USER']),
 });
+
+export const loginSchema = z.object({
+  email: z.string().min(1, 'Email é obrigatório'),
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
+})
 
 export const farmSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -200,7 +205,7 @@ export const fornecedorSchema = z.object({
     return validarCPF(val);
   }, 'CPF invalido'),
   telefone: z.string().optional(),
-  email: z.string().email('Email invalido').optional().or(z.literal('')),
+  email: z.string().optional(),
   endereco: z.string().optional(),
   userId: z.string().optional(),
   companyId: z.string().optional(),
@@ -282,6 +287,7 @@ export const saidaSchema = z.object({
 // Tipos para formulários
 export type CompanyFormData = z.infer<typeof companySchema>;
 export type UserFormData = z.infer<typeof userSchema>;
+export type LoginFormData = z.infer<typeof loginSchema>;
 export type FarmFormData = z.infer<typeof farmSchema>;
 export type TalhaoFormData = z.infer<typeof talhaoSchema>;
 export type FornecedorFormData = z.infer<typeof fornecedorSchema>;
@@ -318,26 +324,25 @@ export interface CompanyFilters {
 export interface UserFilters {
   name?: string;
   email?: string;
-  cpf?: string;
-  cnpj?: string;
+  password?: string;
+  role?: string;
 }
 
 export interface FarmFilters {
   name?: string;
-  cnpj?: string;
-  cpf?: string;
+  area?: number;
   userId?: string;
 }
 
 export interface TalhaoFilters {
   nome?: string;
-  areaMin?: number;
-  areaMax?: number;
+  area?: number;
 }
 
 export interface FornecedorFilters {
   nome?: string;
-  contato?: string;
+  cnpj?: string;
+  cpf?: string;
 }
 
 export interface ProdutoFilters {

@@ -1,22 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "../../../../../lib/prisma";
-import { verifyToken } from "../../../../../lib/auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '../../../../generated/prisma';
+import { authenticateRequest } from '../../../../../lib/api-auth';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
-      { status: 401 }
-    );
+  const auth = await authenticateRequest(request);
+  if (!auth.success) {
+    return auth.response!;
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = auth.payload!;
   try {
     // Obter estatísticas do dashboard
     const [

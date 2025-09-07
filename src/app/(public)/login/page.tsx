@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,26 +17,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, LogIn } from "lucide-react";
 import { apiService } from "@/services/api";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { LoginFormData, loginSchema } from "@/types/frontend";
+import logo from "../../../../public/dr agenda.png";
+import Image from "next/image";
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email é obrigatório")
-    .email("Email deve ter um formato válido"),
-  password: z
-    .string()
-    .min(1, "Senha é obrigatória")
-    .min(6, "Senha deve ter pelo menos 6 caracteres"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  const { toast } = useToast();
+
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -55,17 +45,14 @@ export default function LoginPage() {
       const response = await apiService.login(data.email, data.password);
 
       if (response.success) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: response.message,
-        });
+        toast.success("Login realizado com sucesso!");
         router.push("/dashboard");
       } else {
-        setError(response.error || "Erro ao fazer login");
+        toast.error("Email ou senha incorretos.");
       }
     } catch (err) {
       console.error(err);
-      setError("Erro de conexão. Tente novamente.");
+      toast.error("Email ou senha incorretos.");
     } finally {
       setIsLoading(false);
     }
@@ -74,10 +61,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            AWG Stock Manager
-          </h1>
+        <div className="flex flex-col items-center justify-center">
+          <Image src={logo} alt="logo" width={200} height={150} />
           <p className="text-gray-600">Sistema de Gestão de Estoque Agrícola</p>
         </div>
 
@@ -173,7 +158,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center text-xs text-gray-500">
-          © 2024 AWG Stock Manager. Todos os direitos reservados.
+          {`© ${new Date().getFullYear()} AWG Stock Manager. Todos os direitos reservados.`}
         </div>
       </div>
     </div>

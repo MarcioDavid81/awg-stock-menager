@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../generated/prisma';
 import { z } from 'zod';
-import { verifyToken } from '../../../../lib/auth';
+import { authenticateRequest } from '../../../../lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -18,19 +18,11 @@ const createProdutoSchema = z.object({
 
 // POST - Criar novo produto
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
-      { status: 401 }
-    );
+  const auth = await authenticateRequest(request);
+  if (!auth.success) {
+    return auth.response!;
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { userId, companyId } = auth.payload!;
   try {
     const body = await request.json();    
     // Validar dados de entrada
@@ -89,19 +81,11 @@ export async function POST(request: NextRequest) {
 
 // GET - Listar todos os produtos
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
-      { status: 401 }
-    );
+  const auth = await authenticateRequest(request);
+  if (!auth.success) {
+    return auth.response!;
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = auth.payload!;
   try {
     const { searchParams } = new URL(request.url);
     const ativo = searchParams.get('ativo');

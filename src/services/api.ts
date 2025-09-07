@@ -48,6 +48,7 @@ class ApiService {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
+      credentials: 'include', // Inclui cookies httpOnly automaticamente
       headers: {
         ...(requireAuth ? this.getAuthHeaders() : { 'Content-Type': 'application/json' }),
         ...options.headers,
@@ -246,11 +247,17 @@ class ApiService {
 
   // Fornecedores
   async getFornecedores(filters?: FornecedorFilters, page = 1, limit = 10): Promise<PaginatedResponse<Fornecedor>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
-    });
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
     return this.request(`/fornecedores?${params}`);
   }
 
@@ -280,11 +287,17 @@ class ApiService {
 
   // Produtos
   async getProdutos(filters?: ProdutoFilters, page = 1, limit = 10): Promise<PaginatedResponse<Produto>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
-    });
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
     return this.request(`/produtos?${params}`);
   }
 
@@ -314,11 +327,17 @@ class ApiService {
 
   // Entradas
   async getEntradas(filters?: EntradaFilters, page = 1, limit = 10): Promise<PaginatedResponse<Entrada>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
-    });
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
     return this.request(`/entradas?${params}`);
   }
 
@@ -348,11 +367,17 @@ class ApiService {
 
   // Saídas
   async getSaidas(filters?: SaidaFilters, page = 1, limit = 10): Promise<PaginatedResponse<Saida>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
-    });
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
     return this.request(`/saidas?${params}`);
   }
 

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../generated/prisma';
 import { z } from 'zod';
-import { verifyToken } from '../../../../lib/auth';
+import { authenticateRequest } from '../../../../lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -18,19 +18,17 @@ const createTalhaoSchema = z.object({
 
 // POST - Criar novo talhão
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { userId, companyId } = authResult.payload;
   try {
     const body = await request.json();    
     const validatedData = createTalhaoSchema.parse(body);    
@@ -78,6 +76,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'Dados inválidos',
           details: error,
+          message: 'Dados inválidos',
         },
         { status: 400 }
       );
@@ -96,19 +95,17 @@ export async function POST(request: NextRequest) {
 
 // GET - Listar todos os talhões
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const { searchParams } = new URL(request.url);
     const ativo = searchParams.get('ativo');
@@ -138,6 +135,12 @@ export async function GET(request: NextRequest) {
     const talhoes = await prisma.talhao.findMany({
       where,
       include: {
+        farm: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             saidas: true,

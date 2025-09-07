@@ -41,7 +41,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
 
 export async function getUserFromToken() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const token = cookieStore.get("awg-stock-menager-token")?.value;
 
   if (!token) return null;
 
@@ -70,7 +70,7 @@ export async function getUserFromToken() {
 
 export async function getCompanyFromToken() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const token = cookieStore.get("awg-stock-menager-token")?.value;
 
   if (!token) return null;
 
@@ -87,4 +87,10 @@ export async function getCompanyFromToken() {
   });
 
   return company;
+}
+
+export async function getToken() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("awg-stock-menager-token")?.value;
+  return token;
 }

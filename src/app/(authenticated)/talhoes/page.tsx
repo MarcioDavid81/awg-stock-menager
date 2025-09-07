@@ -51,11 +51,12 @@ import { Plus, Search, MoreHorizontal, Edit, Trash2, MapPin, Ruler, Loader } fro
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
-import { Talhao, TalhaoFormData, talhaoSchema } from '@/types/frontend';
+import { Farm, Talhao, TalhaoFormData, talhaoSchema } from '@/types/frontend';
 import { toast as info } from 'sonner';
 
 export default function TalhoesPage() {
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
+  const [fazendas, setFazendas] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,10 +71,23 @@ export default function TalhoesPage() {
     defaultValues: {
       nome: '',
       area: 0,
-      localizacao: '',
+      farmId: '',
       observacoes: '',
     },
   });
+
+  useEffect(() => {
+    const loadFazendas = async () => {
+      try {
+        const response = await apiService.getFazendas();
+        setFazendas(response.data);
+      } catch (error) {
+        console.error('Erro ao carregar fazendas:', error);
+        info.error('Não foi possível carregar as fazendas.');
+      }
+    };
+    loadFazendas();
+  }, [isDialogOpen]);
 
   const loadTalhoes = useCallback(async () => {
     try {
@@ -126,6 +140,7 @@ export default function TalhoesPage() {
       area: talhao.area,
       localizacao: talhao.localizacao || '',
       observacoes: talhao.observacoes || '',
+      farmId: talhao.farmId || '',
     });
     setIsDialogOpen(true);
     setLoading(false);
@@ -155,6 +170,7 @@ export default function TalhoesPage() {
       area: 0,
       localizacao: '',
       observacoes: '',
+      farmId: '',
     });
     setIsDialogOpen(true);
   };
@@ -272,7 +288,7 @@ export default function TalhoesPage() {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Área (ha)</TableHead>
-                  <TableHead>Localização</TableHead>
+                  <TableHead>Fazenda</TableHead>
                   <TableHead>Observações</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
@@ -292,8 +308,8 @@ export default function TalhoesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {talhao.localizacao ? (
-                        <span className="text-sm">{talhao.localizacao}</span>
+                      {talhao.farm ? (
+                        <span className="text-sm">{talhao.farm.name}</span>
                       ) : (
                         <span className="text-muted-foreground text-sm">Não informado</span>
                       )}
@@ -383,6 +399,29 @@ export default function TalhoesPage() {
                     <FormLabel>Nome *</FormLabel>
                     <FormControl>
                       <Input placeholder="Nome do talhão" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="farmId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fazenda</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        className="w-full rounded border px-2 py-1"
+                      >
+                        <option value="">Selecione</option>
+                        {fazendas.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

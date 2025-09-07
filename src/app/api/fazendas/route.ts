@@ -1,7 +1,7 @@
 import z from "zod";
-import { verifyToken } from "../../../../lib/auth";
 import { PrismaClient } from "../../../generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from '../../../../lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -11,19 +11,17 @@ const createFazendaSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { userId, companyId } = authResult.payload;
 
   try {
     const body = await req.json();
@@ -46,19 +44,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const fazendas = await prisma.farm.findMany({
       where: {

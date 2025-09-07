@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyToken } from "../../../../../lib/auth";
+import { authenticateRequest } from "../../../../../lib/api-auth";
 import { PrismaClient } from "../../../../generated/prisma";
 
 const prisma = new PrismaClient();
@@ -101,19 +101,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const saida = await prisma.saida.findUnique({
       where: {
@@ -165,19 +163,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId, userId } = payload;
+  const { companyId, userId } = authResult.payload;
   try {
     const body = await request.json();
     const validatedData = updateSaidaSchema.parse(body);
@@ -352,20 +348,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { userId, companyId } = authResult.payload;
   try {
     // Verificar se a saída existe
     const existingSaida = await prisma.saida.findUnique({
