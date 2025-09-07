@@ -41,13 +41,15 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1
-                className={`text-2xl font-bold transition-colors duration-300 ${
-                  scrolled ? "text-green-900" : "text-white"
-                }`}
-              >
-                AWG StockMenager
-              </h1>
+              <Link href="/">
+                <h1
+                  className={`text-2xl font-bold transition-colors duration-300 ${
+                    scrolled ? "text-green-900" : "text-white"
+                  }`}
+                >
+                  AWG StockMenager
+                </h1>
+              </Link>
             </div>
 
             {/* Desktop Menu */}
