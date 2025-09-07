@@ -28,6 +28,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import logo from "../../../public/dr agenda.png";
 import { Separator } from "../ui/separator";
+import { useUser } from "@/contexts/user-context";
 
 const navigation = [
   {
@@ -75,6 +76,7 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { user } = useUser();
 
   const handleLogout = async () => {
     setLoading(true);
@@ -129,6 +131,16 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
       <Separator />
       <div className="px-3">
+        <div className="flex items-center justify-center mb-4">
+          <Image
+            src={user?.avatarUrl ?? ""}
+            alt={user?.name ?? ""}
+            width={40}
+            height={40}
+            className="rounded-full mr-2"
+          />
+          <span>{user?.name}</span>
+        </div>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           {loading ? <Loader2 className="animate-spin" /> : "Sair"}

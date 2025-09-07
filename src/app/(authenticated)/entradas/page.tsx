@@ -61,6 +61,8 @@ import { Entrada, Produto, Fornecedor, EntradaFormData, entradaSchema } from '@/
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast as info } from 'sonner';
+// import { DefineAbilityFor } from '../../../../lib/role-ability';
+// import { useUser } from '../../../contexts/user-context';
 
 export default function EntradasPage() {
   const [entradas, setEntradas] = useState<Entrada[]>([]);
@@ -76,6 +78,9 @@ export default function EntradasPage() {
   const [deletingEntrada, setDeletingEntrada] = useState<Entrada | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // const { user } = useUser();
+  // const ability = DefineAbilityFor(user?.role);
 
   const form = useForm<EntradaFormData>({
     resolver: zodResolver(entradaSchema),

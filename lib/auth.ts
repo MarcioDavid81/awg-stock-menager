@@ -56,6 +56,7 @@ export async function getUserFromToken() {
       name: true,
       email: true,
       role: true,
+      avatarUrl: true,
       company: {
         select: {
           id: true,
