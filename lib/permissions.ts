@@ -1,19 +1,24 @@
-import { User } from "@/types/frontend";
 import { AbilityBuilder } from "@casl/ability";
 import { AppAbility } from "./role-ability";
+import { Role } from "./subjects/roles";
 
-type Roles = "ADMIN" | "USER";
+export type UserForCASL ={
+    id: string;
+    role: Role;
+}
 
 type PermissionByRole = (
-  user: Pick<User, "role">,
+  user: UserForCASL,
   builder: AbilityBuilder<AppAbility>
 ) => void;
 
-export const permissions: Record<Roles, PermissionByRole> = {
-  ADMIN(user, { can }) {
+export const permissions: Record<Role, PermissionByRole> = {
+  ADMIN(_, { can }) {
     can("manage", "all");
   },
-  USER(user, { can }) {
-    can("read", "all");    
+  USER(user, { can, cannot }) {
+    can(["read", "create"], "Entrada");  
+    cannot(["update", "delete"], "Entrada");
+    can(["update", "delete"], "Entrada", { userId: { $eq: user.id }});
   },
 };

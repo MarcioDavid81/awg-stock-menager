@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -28,21 +34,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,17 +58,32 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingUp, Package, Calendar, Loader } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { apiService } from '@/services/api';
-import { Entrada, Produto, Fornecedor, EntradaFormData, entradaSchema } from '@/types/frontend';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast as info } from 'sonner';
-// import { DefineAbilityFor } from '../../../../lib/role-ability';
-// import { useUser } from '../../../contexts/user-context';
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  TrendingUp,
+  Package,
+  Calendar,
+  Loader,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiService } from "@/services/api";
+import {
+  Entrada,
+  Produto,
+  Fornecedor,
+  EntradaFormData,
+  entradaSchema,
+} from "@/types/frontend";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast as info } from "sonner";
+import { useUser } from "../../../contexts/user-context";
 
 export default function EntradasPage() {
   const [entradas, setEntradas] = useState<Entrada[]>([]);
@@ -70,8 +91,8 @@ export default function EntradasPage() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedProduto, setSelectedProduto] = useState<string>('');
-  const [selectedFornecedor, setSelectedFornecedor] = useState<string>('');
+  const [selectedProduto, setSelectedProduto] = useState<string>("");
+  const [selectedFornecedor, setSelectedFornecedor] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEntrada, setEditingEntrada] = useState<Entrada | null>(null);
   const [viewingEntrada, setViewingEntrada] = useState<Entrada | null>(null);
@@ -79,49 +100,50 @@ export default function EntradasPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // const { user } = useUser();
-  // const ability = DefineAbilityFor(user?.role);
+  const { user } = useUser();
 
   const form = useForm<EntradaFormData>({
     resolver: zodResolver(entradaSchema),
     defaultValues: {
-      tipo: 'COMPRA',
-      produtoId: '',
-      fornecedorId: '',
+      tipo: "COMPRA",
+      produtoId: "",
+      fornecedorId: "",
       quantidade: 0,
       valorUnitario: 0,
       valorTotal: 0,
-      observacoes: '',
-      dataEntrada: new Date().toISOString().split('T')[0],
-      numeroNota: '',
+      observacoes: "",
+      dataEntrada: new Date().toISOString().split("T")[0],
+      numeroNota: "",
     },
   });
 
   // Watch para calcular valor total automaticamente
-  const watchedQuantidade = form.watch('quantidade');
-  const watchedValorUnitario = form.watch('valorUnitario');
-  const watchedTipo = form.watch('tipo');
+  const watchedQuantidade = form.watch("quantidade");
+  const watchedValorUnitario = form.watch("valorUnitario");
+  const watchedTipo = form.watch("tipo");
 
   useEffect(() => {
     const quantidade = watchedQuantidade || 0;
     const valorUnitario = watchedValorUnitario || 0;
     const valorTotal = quantidade * valorUnitario;
-    form.setValue('valorTotal', valorTotal);
+    form.setValue("valorTotal", valorTotal);
   }, [watchedQuantidade, watchedValorUnitario, form]);
 
   const loadEntradas = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
-        ...(selectedProduto && selectedProduto !== 'all' && { produtoId: selectedProduto }),
-        ...(selectedFornecedor && selectedFornecedor !== 'all' && { fornecedorId: selectedFornecedor }),
+        ...(selectedProduto &&
+          selectedProduto !== "all" && { produtoId: selectedProduto }),
+        ...(selectedFornecedor &&
+          selectedFornecedor !== "all" && { fornecedorId: selectedFornecedor }),
       };
       const response = await apiService.getEntradas(filters, page, 10);
       setEntradas(response.data);
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
-      console.error('Erro ao carregar entradas:', error);
-      info.error('Não foi possível carregar as entradas.');
+      console.error("Erro ao carregar entradas:", error);
+      info.error("Não foi possível carregar as entradas.");
     } finally {
       setLoading(false);
     }
@@ -132,7 +154,7 @@ export default function EntradasPage() {
       const response = await apiService.getProdutos({}, 1, 1000);
       setProdutos(response.data);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error("Erro ao carregar produtos:", error);
     }
   }, []);
 
@@ -141,7 +163,7 @@ export default function EntradasPage() {
       const response = await apiService.getFornecedores({}, 1, 1000);
       setFornecedores(response.data);
     } catch (error) {
-      console.error('Erro ao carregar fornecedores:', error);
+      console.error("Erro ao carregar fornecedores:", error);
     }
   }, []);
 
@@ -157,40 +179,58 @@ export default function EntradasPage() {
       const submitData = {
         ...data,
         // Converter data para formato ISO datetime
-        dataEntrada: data.dataEntrada ? new Date(data.dataEntrada + 'T12:00:00').toISOString() : undefined,
+        dataEntrada: data.dataEntrada
+          ? new Date(data.dataEntrada + "T12:00:00").toISOString()
+          : undefined,
         // Para transferências, remover campos relacionados a compra
-        ...(data.tipo === 'TRANSFERENCIA_POSITIVA' && {
+        ...(data.tipo === "TRANSFERENCIA_POSITIVA" && {
           fornecedorId: undefined,
           valorUnitario: undefined,
           valorTotal: undefined,
           numeroNota: data.numeroNota || undefined,
         }),
         // Para compras, garantir que fornecedor está presente e valores são válidos
-        ...(data.tipo === 'COMPRA' && {
+        ...(data.tipo === "COMPRA" && {
           fornecedorId: data.fornecedorId || undefined,
-          valorUnitario: data.valorUnitario && data.valorUnitario > 0 ? data.valorUnitario : undefined,
-          valorTotal: data.valorTotal && data.valorTotal > 0 ? data.valorTotal : undefined,
+          valorUnitario:
+            data.valorUnitario && data.valorUnitario > 0
+              ? data.valorUnitario
+              : undefined,
+          valorTotal:
+            data.valorTotal && data.valorTotal > 0
+              ? data.valorTotal
+              : undefined,
         }),
         // Remover campos com valor 0 ou undefined para evitar erro de validação
-        ...((!data.valorUnitario || data.valorUnitario <= 0) && { valorUnitario: undefined }),
-        ...((!data.valorTotal || data.valorTotal <= 0) && { valorTotal: undefined })
+        ...((!data.valorUnitario || data.valorUnitario <= 0) && {
+          valorUnitario: undefined,
+        }),
+        ...((!data.valorTotal || data.valorTotal <= 0) && {
+          valorTotal: undefined,
+        }),
       };
-      
+
       if (editingEntrada) {
         await apiService.updateEntrada(editingEntrada.id, submitData);
-        info.success('Entrada atualizada com sucesso.');
+        info.success("Entrada atualizada com sucesso.");
       } else {
         await apiService.createEntrada(submitData);
-        info.success('Entrada registrada com sucesso.');
+        info.success("Entrada registrada com sucesso.");
       }
-      
+
       setIsDialogOpen(false);
       setEditingEntrada(null);
       form.reset();
       loadEntradas();
     } catch (error) {
-      console.error('Erro ao processar entrada:', error);
-      info.error(`${editingEntrada ? 'Não foi possível atualizar a entrada.' : 'Não foi possível registrar a entrada.'}`)
+      console.error("Erro ao processar entrada:", error);
+      info.error(
+        `${
+          editingEntrada
+            ? "Não foi possível atualizar a entrada."
+            : "Não foi possível registrar a entrada."
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -199,15 +239,15 @@ export default function EntradasPage() {
   const openCreateDialog = () => {
     setEditingEntrada(null);
     form.reset({
-      tipo: 'COMPRA',
-      produtoId: '',
-      fornecedorId: '',
+      tipo: "COMPRA",
+      produtoId: "",
+      fornecedorId: "",
       quantidade: 0,
       valorUnitario: 0,
       valorTotal: 0,
-      observacoes: '',
-      dataEntrada: new Date().toISOString().split('T')[0],
-      numeroNota: '',
+      observacoes: "",
+      dataEntrada: new Date().toISOString().split("T")[0],
+      numeroNota: "",
     });
     setIsDialogOpen(true);
   };
@@ -217,13 +257,14 @@ export default function EntradasPage() {
     form.reset({
       tipo: entrada.tipo,
       produtoId: entrada.produtoId,
-      fornecedorId: entrada.fornecedorId || '',
+      fornecedorId: entrada.fornecedorId || "",
       quantidade: entrada.quantidade,
-      valorUnitario: entrada.valorUnitario || (entrada.tipo === 'COMPRA' ? 1 : 0),
+      valorUnitario:
+        entrada.valorUnitario || (entrada.tipo === "COMPRA" ? 1 : 0),
       valorTotal: entrada.valorTotal || 0,
-      observacoes: entrada.observacoes || '',
-      dataEntrada: new Date(entrada.dataEntrada).toISOString().split('T')[0],
-      numeroNota: entrada.numeroNota || '',
+      observacoes: entrada.observacoes || "",
+      dataEntrada: new Date(entrada.dataEntrada).toISOString().split("T")[0],
+      numeroNota: entrada.numeroNota || "",
     });
     setIsDialogOpen(true);
   };
@@ -233,41 +274,43 @@ export default function EntradasPage() {
 
     try {
       await apiService.deleteEntrada(deletingEntrada.id);
-      info.success('Entrada excluída com sucesso.');
+      info.success("Entrada excluída com sucesso.");
       setDeletingEntrada(null);
       loadEntradas();
     } catch (error) {
-      console.error('Erro ao excluir entrada:', error);
-      info.error('Não foi possível excluir a entrada.');
+      console.error("Erro ao excluir entrada:", error);
+      info.error("Não foi possível excluir a entrada.");
     }
   };
 
   // Limpar fornecedor quando tipo não for COMPRA
   useEffect(() => {
-    if (watchedTipo !== 'COMPRA') {
-      form.setValue('fornecedorId', '');
-      form.setValue('valorUnitario', 0);
-      form.setValue('valorTotal', 0);
+    if (watchedTipo !== "COMPRA") {
+      form.setValue("fornecedorId", "");
+      form.setValue("valorUnitario", 0);
+      form.setValue("valorTotal", 0);
     }
   }, [watchedTipo, form]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatQuantity = (quantity: number, unidade: string) => {
-    return `${new Intl.NumberFormat('pt-BR').format(quantity)} ${unidade}`;
+    return `${new Intl.NumberFormat("pt-BR").format(quantity)} ${unidade}`;
   };
 
   const getTotalValue = () => {
-    return entradas.reduce((total, entrada) => total + (entrada.quantidade * entrada.valorUnitario), 0);
+    return entradas.reduce(
+      (total, entrada) => total + entrada.quantidade * entrada.valorUnitario,
+      0
+    );
   };
 
-
-
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -287,7 +330,9 @@ export default function EntradasPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Entradas</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Entradas
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -300,17 +345,21 @@ export default function EntradasPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(getTotalValue())}</div>
+            <div className="text-2xl font-bold">
+              {formatCurrency(getTotalValue())}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos Únicos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Produtos Únicos
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(entradas.map(e => e.produtoId)).size}
+              {new Set(entradas.map((e) => e.produtoId)).size}
             </div>
           </CardContent>
         </Card>
@@ -321,11 +370,13 @@ export default function EntradasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {entradas.filter(e => {
-                const today = new Date();
-                const entradaDate = new Date(e.dataEntrada);
-                return entradaDate.toDateString() === today.toDateString();
-              }).length}
+              {
+                entradas.filter((e) => {
+                  const today = new Date();
+                  const entradaDate = new Date(e.dataEntrada);
+                  return entradaDate.toDateString() === today.toDateString();
+                }).length
+              }
             </div>
           </CardContent>
         </Card>
@@ -354,7 +405,10 @@ export default function EntradasPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={selectedFornecedor} onValueChange={setSelectedFornecedor}>
+            <Select
+              value={selectedFornecedor}
+              onValueChange={setSelectedFornecedor}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Fornecedor" />
               </SelectTrigger>
@@ -388,7 +442,9 @@ export default function EntradasPage() {
           ) : entradas.length === 0 ? (
             <div className="text-center py-8">
               <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhuma entrada encontrada.</p>
+              <p className="text-muted-foreground">
+                Nenhuma entrada encontrada.
+              </p>
               <Button onClick={openCreateDialog} className="mt-4">
                 <Plus className="mr-2 h-4 w-4" />
                 Registrar primeira entrada
@@ -415,42 +471,61 @@ export default function EntradasPage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {format(new Date(entrada.dataEntrada), 'dd/MM/yyyy', { locale: ptBR })}
+                          {format(new Date(entrada.dataEntrada), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={entrada.tipo === 'COMPRA' ? 'default' : 'outline'}>
-                        {entrada.tipo === 'COMPRA' ? 'Compra' : 'Transferência +'}
+                      <Badge
+                        variant={
+                          entrada.tipo === "COMPRA" ? "default" : "outline"
+                        }
+                      >
+                        {entrada.tipo === "COMPRA"
+                          ? "Compra"
+                          : "Transferência +"}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
                       <div>
-                        <div>{entrada.produto?.nome || 'Produto não informado'}</div>
+                        <div>
+                          {entrada.produto?.nome || "Produto não informado"}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {entrada.fornecedor ? (
-                        <span className="text-sm">{entrada.fornecedor.nome}</span>
+                        <span className="text-sm">
+                          {entrada.fornecedor.nome}
+                        </span>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Transferência</span>
+                        <span className="text-muted-foreground text-sm">
+                          Transferência
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {formatQuantity(entrada.quantidade, entrada.produto?.unidade || 'un')}
+                        {formatQuantity(
+                          entrada.quantidade,
+                          entrada.produto?.unidade || "un"
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono">
-                      {entrada.tipo === 'COMPRA' && entrada.valorUnitario ? (
+                      {entrada.tipo === "COMPRA" && entrada.valorUnitario ? (
                         formatCurrency(entrada.valorUnitario)
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="font-mono font-medium">
-                      {entrada.tipo === 'COMPRA' && entrada.valorUnitario ? (
-                        formatCurrency(entrada.quantidade * entrada.valorUnitario)
+                      {entrada.tipo === "COMPRA" && entrada.valorUnitario ? (
+                        formatCurrency(
+                          entrada.quantidade * entrada.valorUnitario
+                        )
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
@@ -463,21 +538,36 @@ export default function EntradasPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setViewingEntrada(entrada)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditDialog(entrada)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => setDeletingEntrada(entrada)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
+                          {user?.role === "USER" ? (
+                            <DropdownMenuItem
+                              onClick={() => setViewingEntrada(entrada)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Ver detalhes
+                            </DropdownMenuItem>
+                          ) : (
+                            <>
+                              <DropdownMenuItem
+                              onClick={() => setViewingEntrada(entrada)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Ver detalhes
+                            </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openEditDialog(entrada)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setDeletingEntrada(entrada)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -516,13 +606,20 @@ export default function EntradasPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{editingEntrada ? 'Editar Entrada' : 'Nova Entrada'}</DialogTitle>
+            <DialogTitle>
+              {editingEntrada ? "Editar Entrada" : "Nova Entrada"}
+            </DialogTitle>
             <DialogDescription>
-              {editingEntrada ? 'Edite os dados da entrada de produto.' : 'Registre uma nova entrada de produto no estoque.'}
+              {editingEntrada
+                ? "Edite os dados da entrada de produto."
+                : "Registre uma nova entrada de produto no estoque."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="tipo"
@@ -537,7 +634,9 @@ export default function EntradasPage() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="COMPRA">Compra</SelectItem>
-                        <SelectItem value="TRANSFERENCIA_POSITIVA">Transferência Positiva</SelectItem>
+                        <SelectItem value="TRANSFERENCIA_POSITIVA">
+                          Transferência Positiva
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -573,14 +672,17 @@ export default function EntradasPage() {
                   </FormItem>
                 )}
               />
-              {watchedTipo === 'COMPRA' && (
+              {watchedTipo === "COMPRA" && (
                 <FormField
                   control={form.control}
                   name="fornecedorId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Fornecedor *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um fornecedor" />
@@ -588,7 +690,10 @@ export default function EntradasPage() {
                         </FormControl>
                         <SelectContent>
                           {fornecedores.map((fornecedor) => (
-                            <SelectItem key={fornecedor.id} value={fornecedor.id}>
+                            <SelectItem
+                              key={fornecedor.id}
+                              value={fornecedor.id}
+                            >
                               {fornecedor.nome}
                             </SelectItem>
                           ))}
@@ -607,10 +712,7 @@ export default function EntradasPage() {
                     <FormItem>
                       <FormLabel>Data da Entrada *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                        />
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -623,10 +725,7 @@ export default function EntradasPage() {
                     <FormItem>
                       <FormLabel>Número da Nota</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Número da nota fiscal"
-                          {...field}
-                        />
+                        <Input placeholder="Número da nota fiscal" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -652,7 +751,7 @@ export default function EntradasPage() {
                   </FormItem>
                 )}
               />
-              {watchedTipo === 'COMPRA' && (
+              {watchedTipo === "COMPRA" && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -667,7 +766,9 @@ export default function EntradasPage() {
                               step="0.01"
                               placeholder="0.00"
                               {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -715,7 +816,7 @@ export default function EntradasPage() {
               />
               <DialogFooter>
                 <Button type="submit" disabled={loading}>
-                  {editingEntrada ? 'Atualizar Entrada' : 'Registrar Entrada'}
+                  {editingEntrada ? "Atualizar Entrada" : "Registrar Entrada"}
                   {loading && <Loader className="ml-2 animate-spin" />}
                 </Button>
               </DialogFooter>
@@ -725,7 +826,10 @@ export default function EntradasPage() {
       </Dialog>
 
       {/* Dialog de visualização */}
-      <Dialog open={!!viewingEntrada} onOpenChange={() => setViewingEntrada(null)}>
+      <Dialog
+        open={!!viewingEntrada}
+        onOpenChange={() => setViewingEntrada(null)}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Detalhes da Entrada</DialogTitle>
@@ -739,13 +843,23 @@ export default function EntradasPage() {
                 <div>
                   <label className="text-sm font-medium">Data da Entrada</label>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(viewingEntrada.dataEntrada), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                    {format(
+                      new Date(viewingEntrada.dataEntrada),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: ptBR }
+                    )}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Tipo</label>
-                  <Badge variant={viewingEntrada.tipo === 'COMPRA' ? 'default' : 'secondary'}>
-                    {viewingEntrada.tipo === 'COMPRA' ? 'Compra' : 'Transferência Positiva'}
+                  <Badge
+                    variant={
+                      viewingEntrada.tipo === "COMPRA" ? "default" : "secondary"
+                    }
+                  >
+                    {viewingEntrada.tipo === "COMPRA"
+                      ? "Compra"
+                      : "Transferência Positiva"}
                   </Badge>
                 </div>
               </div>
@@ -753,43 +867,57 @@ export default function EntradasPage() {
                 <div>
                   <label className="text-sm font-medium">Produto</label>
                   <p className="text-sm text-muted-foreground">
-                    {viewingEntrada.produto?.nome || 'Produto não informado'}
+                    {viewingEntrada.produto?.nome || "Produto não informado"}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Quantidade</label>
                   <p className="text-sm text-muted-foreground">
-                    {formatQuantity(viewingEntrada.quantidade, viewingEntrada.produto?.unidade || 'un')}
+                    {formatQuantity(
+                      viewingEntrada.quantidade,
+                      viewingEntrada.produto?.unidade || "un"
+                    )}
                   </p>
                 </div>
               </div>
-              {viewingEntrada.tipo === 'COMPRA' && (
+              {viewingEntrada.tipo === "COMPRA" && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium">Fornecedor</label>
                       <p className="text-sm text-muted-foreground">
-                        {viewingEntrada.fornecedor?.nome || 'Não informado'}
+                        {viewingEntrada.fornecedor?.nome || "Não informado"}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Número da Nota</label>
+                      <label className="text-sm font-medium">
+                        Número da Nota
+                      </label>
                       <p className="text-sm text-muted-foreground">
-                        {viewingEntrada.valorUnitario || 'Não informado'}
+                        {viewingEntrada.valorUnitario || "Não informado"}
                       </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium">Preço Unitário</label>
+                      <label className="text-sm font-medium">
+                        Preço Unitário
+                      </label>
                       <p className="text-sm text-muted-foreground">
-                        {viewingEntrada.valorUnitario ? formatCurrency(viewingEntrada.valorUnitario) : 'Não informado'}
+                        {viewingEntrada.valorUnitario
+                          ? formatCurrency(viewingEntrada.valorUnitario)
+                          : "Não informado"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium">Valor Total</label>
                       <p className="text-lg font-bold">
-                        {viewingEntrada.valorUnitario ? formatCurrency(viewingEntrada.quantidade * viewingEntrada.valorUnitario) : 'Não informado'}
+                        {viewingEntrada.valorUnitario
+                          ? formatCurrency(
+                              viewingEntrada.quantidade *
+                                viewingEntrada.valorUnitario
+                            )
+                          : "Não informado"}
                       </p>
                     </div>
                   </div>
@@ -817,13 +945,17 @@ export default function EntradasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta entrada de &quot;{deletingEntrada?.produto?.nome}&quot;?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta entrada de &quot;
+              {deletingEntrada?.produto?.nome}&quot;? Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

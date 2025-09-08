@@ -54,6 +54,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Fornecedor, FornecedorFormData, fornecedorSchema } from '@/types/frontend';
 import { toast as info } from 'sonner';
+import { useUser } from '@/contexts/user-context';
 
 export default function FornecedoresPage() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -65,6 +66,7 @@ export default function FornecedoresPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [tipoPessoa, setTipoPessoa] = useState<'juridica' | 'fisica'>('juridica');
+  const { user } = useUser();
 
 
   const form = useForm<FornecedorFormData>({
@@ -315,19 +317,28 @@ export default function FornecedoresPage() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(fornecedor)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeletingFornecedor(fornecedor)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
+                        {user?.role === "USER" ? (
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem onClick={() => handleEdit(fornecedor)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        ) : (
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(fornecedor)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setDeletingFornecedor(fornecedor)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        )}
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>

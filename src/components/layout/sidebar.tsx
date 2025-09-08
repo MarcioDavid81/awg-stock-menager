@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import logo from "../../../public/dr agenda.png";
 import { Separator } from "../ui/separator";
 import { useUser } from "@/contexts/user-context";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const navigation = [
   {
@@ -131,14 +132,11 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
       <Separator />
       <div className="px-3">
-        <div className="flex items-center justify-center mb-4">
-          <Image
-            src={user?.avatarUrl ?? ""}
-            alt={user?.name ?? ""}
-            width={40}
-            height={40}
-            className="rounded-full mr-2"
-          />
+        <div className="flex items-center justify-center mb-4 space-x-4">
+          <Avatar>
+            <AvatarImage src={user?.avatarUrl || undefined} />
+            <AvatarFallback>{user?.name?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
+          </Avatar>
           <span>{user?.name}</span>
         </div>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
@@ -182,18 +180,18 @@ export function MobileSidebar() {
                     href={item.href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
-                    isActive
-                      ? "bg-primary text-white hover:bg-primary hover:text-white"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </div>
+                      "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                      isActive
+                        ? "bg-primary text-white hover:bg-primary hover:text-white"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
