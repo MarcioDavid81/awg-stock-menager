@@ -158,7 +158,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center text-xs text-gray-500">
-          {`© ${new Date().getFullYear()} AWG StockMenager. Todos os direitos reservados.`}
+          {`© ${new Date().getFullYear()} AWG StockManager. Todos os direitos reservados.`}
         </div>
       </div>
     </div>
