@@ -1,10 +1,17 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -28,21 +35,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,16 +59,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, MoreHorizontal, Eye, Edit, Trash2, TrendingDown, Package, Calendar, MapPin, Loader } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { apiService } from '@/services/api';
-import { Saida, Produto, Talhao, SaidaFormData, saidaSchema } from '@/types/frontend';
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  TrendingDown,
+  Package,
+  Calendar,
+  MapPin,
+  Loader,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiService } from "@/services/api";
+import {
+  Saida,
+  Produto,
+  Talhao,
+  SaidaFormData,
+  saidaSchema,
+} from "@/types/frontend";
 
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast as info } from 'sonner'
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast as info } from "sonner";
+import { useUser } from "@/contexts/user-context";
+import { DefineAbilityFor } from "../../../../lib/role-ability";
 
 export default function SaidasPage() {
   const [saidas, setSaidas] = useState<Saida[]>([]);
@@ -69,43 +95,49 @@ export default function SaidasPage() {
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedProduto, setSelectedProduto] = useState<string>('');
-  const [selectedTalhao, setSelectedTalhao] = useState<string>('');
+  const [selectedProduto, setSelectedProduto] = useState<string>("");
+  const [selectedTalhao, setSelectedTalhao] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingSaida, setViewingSaida] = useState<Saida | null>(null);
   const [editingSaida, setEditingSaida] = useState<Saida | null>(null);
   const [deletingSaida, setDeletingSaida] = useState<Saida | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
- 
+
+  const { user } = useUser();
+  const ability = user
+    ? DefineAbilityFor({ id: user.id, role: user.role })
+    : null;
 
   const form = useForm<SaidaFormData>({
     resolver: zodResolver(saidaSchema),
     defaultValues: {
-      tipo: 'APLICACAO',
-      produtoId: '',
-      talhaoId: '',
+      tipo: "APLICACAO",
+      produtoId: "",
+      talhaoId: "",
       quantidade: 0,
-      observacoes: '',
-      dataSaida: new Date().toISOString().split('T')[0],
+      observacoes: "",
+      dataSaida: new Date().toISOString().split("T")[0],
     },
   });
 
-  const tipoSaida = form.watch('tipo');
+  const tipoSaida = form.watch("tipo");
 
   const loadSaidas = useCallback(async () => {
     try {
       setLoading(true);
       const filters = {
-        ...(selectedProduto && selectedProduto !== 'all' && { produtoId: selectedProduto }),
-        ...(selectedTalhao && selectedTalhao !== 'all' && { talhaoId: selectedTalhao }),
+        ...(selectedProduto &&
+          selectedProduto !== "all" && { produtoId: selectedProduto }),
+        ...(selectedTalhao &&
+          selectedTalhao !== "all" && { talhaoId: selectedTalhao }),
       };
       const response = await apiService.getSaidas(filters, page, 10);
       setSaidas(response.data);
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
-      console.error('Erro ao carregar saídas:', error);
-      info.error('Erro ao carregar saídas.');
+      console.error("Erro ao carregar saídas:", error);
+      info.error("Erro ao carregar saídas.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +148,7 @@ export default function SaidasPage() {
       const response = await apiService.getProdutos({}, 1, 1000);
       setProdutos(response.data);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error("Erro ao carregar produtos:", error);
     }
   }, []);
 
@@ -125,7 +157,7 @@ export default function SaidasPage() {
       const response = await apiService.getTalhoes({}, 1, 1000);
       setTalhoes(response.data);
     } catch (error) {
-      console.error('Erro ao carregar talhões:', error);
+      console.error("Erro ao carregar talhões:", error);
     }
   }, []);
 
@@ -144,24 +176,36 @@ export default function SaidasPage() {
         // Converter data para formato ISO datetime
         dataSaida: `${data.dataSaida}T12:00:00.000Z`,
         // Para TRANSFERENCIA_NEGATIVA, remover talhaoId se estiver vazio
-        ...(data.tipo === 'TRANSFERENCIA_NEGATIVA' && { talhaoId: undefined }),
+        ...(data.tipo === "TRANSFERENCIA_NEGATIVA" && { talhaoId: undefined }),
       };
 
       if (editingSaida) {
         await apiService.updateSaida(editingSaida.id, submitData);
-        info.success('Saída atualizada com sucesso.');
+        info.success("Saída atualizada com sucesso.");
       } else {
         await apiService.createSaida(submitData);
-        info.success('Saída registrada com sucesso.');
+        info.success("Saída registrada com sucesso.");
       }
-      
+
       setIsDialogOpen(false);
       setEditingSaida(null);
       form.reset();
       loadSaidas();
-    } catch (error) {
-      console.error('Erro ao processar saída:', error);
-      info.error(`${editingSaida ? 'Não foi possível atualizar a saída.' : 'Não foi possível registrar a saída.'}`)
+    } catch (error: any) {
+      if (error.status === 400 && error.message && error.message.includes("Estoque insificiente")) {
+        info.error(error.message);
+      } else if (error.status === 404) {
+        info.error(error.message || "Produto ou talhão não encontrado.");
+      } else {
+        // Erro genérico
+        info.error(
+          `${
+            editingSaida
+              ? "Não foi possível atualizar a saída."
+              : "Não foi possível registrar a saída."
+          }`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -170,12 +214,12 @@ export default function SaidasPage() {
   const openCreateDialog = () => {
     setEditingSaida(null);
     form.reset({
-      tipo: 'APLICACAO',
-      produtoId: '',
-      talhaoId: '',
+      tipo: "APLICACAO",
+      produtoId: "",
+      talhaoId: "",
       quantidade: 0,
-      observacoes: '',
-      dataSaida: new Date().toISOString().split('T')[0],
+      observacoes: "",
+      dataSaida: new Date().toISOString().split("T")[0],
     });
     setIsDialogOpen(true);
   };
@@ -185,10 +229,10 @@ export default function SaidasPage() {
     form.reset({
       tipo: saida.tipo,
       produtoId: saida.produtoId,
-      talhaoId: saida.talhaoId || '',
+      talhaoId: saida.talhaoId || "",
       quantidade: saida.quantidade,
-      observacoes: saida.observacoes || '',
-      dataSaida: new Date(saida.dataSaida).toISOString().split('T')[0],
+      observacoes: saida.observacoes || "",
+      dataSaida: new Date(saida.dataSaida).toISOString().split("T")[0],
     });
     setIsDialogOpen(true);
   };
@@ -198,27 +242,25 @@ export default function SaidasPage() {
 
     try {
       await apiService.deleteSaida(deletingSaida.id);
-      info.success('Saída excluída com sucesso.');
+      info.success("Saída excluída com sucesso.");
       setDeletingSaida(null);
       loadSaidas();
     } catch (error) {
-      console.error('Erro ao excluir saída:', error);
-      info.error('Erro ao excluir saída.');
+      console.error("Erro ao excluir saída:", error);
+      info.error("Erro ao excluir saída.");
     }
   };
 
   // Limpar talhaoId quando o tipo não for APLICACAO
   useEffect(() => {
-    if (tipoSaida !== 'APLICACAO') {
-      form.setValue('talhaoId', '');
+    if (tipoSaida !== "APLICACAO") {
+      form.setValue("talhaoId", "");
     }
   }, [tipoSaida, form]);
 
   const formatQuantity = (quantity: number, unidade: string) => {
-    return `${new Intl.NumberFormat('pt-BR').format(quantity)} ${unidade}`;
+    return `${new Intl.NumberFormat("pt-BR").format(quantity)} ${unidade}`;
   };
-
-
 
   return (
     <div className="space-y-6">
@@ -229,17 +271,21 @@ export default function SaidasPage() {
             Registre e acompanhe as saídas de produtos do estoque
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Saída
-        </Button>
+        {ability?.can("create", "Saida") && (
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Saída
+          </Button>
+        )}
       </div>
 
       {/* Estatísticas */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Saídas</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Saídas
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -248,23 +294,27 @@ export default function SaidasPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos Únicos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Produtos Únicos
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(saidas.map(s => s.produtoId)).size}
+              {new Set(saidas.map((s) => s.produtoId)).size}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Talhões Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Talhões Ativos
+            </CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(saidas.map(s => s.talhaoId)).size}
+              {new Set(saidas.map((s) => s.talhaoId)).size}
             </div>
           </CardContent>
         </Card>
@@ -275,11 +325,13 @@ export default function SaidasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {saidas.filter(s => {
-                const today = new Date();
-                const saidaDate = new Date(s.dataSaida);
-                return saidaDate.toDateString() === today.toDateString();
-              }).length}
+              {
+                saidas.filter((s) => {
+                  const today = new Date();
+                  const saidaDate = new Date(s.dataSaida);
+                  return saidaDate.toDateString() === today.toDateString();
+                }).length
+              }
             </div>
           </CardContent>
         </Card>
@@ -368,33 +420,48 @@ export default function SaidasPage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {format(new Date(saida.dataSaida), 'dd/MM/yyyy', { locale: ptBR })}
+                          {format(new Date(saida.dataSaida), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={saida.tipo === 'APLICACAO' ? 'default' : 'outline'}>
-                        {saida.tipo === 'APLICACAO' ? 'Aplicação' : 'Transferência -'}
+                      <Badge
+                        variant={
+                          saida.tipo === "APLICACAO" ? "default" : "outline"
+                        }
+                      >
+                        {saida.tipo === "APLICACAO"
+                          ? "Aplicação"
+                          : "Transferência -"}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
                       <div>
-                        <div>{saida.produto?.nome || 'Produto não informado'}</div>
+                        <div>
+                          {saida.produto?.nome || "Produto não informado"}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      {saida.tipo === 'APLICACAO' ? (
+                      {saida.tipo === "APLICACAO" ? (
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{saida.talhao?.nome}</span>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Transferência</span>
+                        <span className="text-muted-foreground text-sm">
+                          Transferência
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {formatQuantity(saida.quantidade, saida.produto?.unidade || 'un')}
+                        {formatQuantity(
+                          saida.quantidade,
+                          saida.produto?.unidade || "un"
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -403,7 +470,9 @@ export default function SaidasPage() {
                           {saida.observacoes}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Nenhuma</span>
+                        <span className="text-muted-foreground text-sm">
+                          Nenhuma
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -414,21 +483,34 @@ export default function SaidasPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setViewingSaida(saida)}>
+                          <DropdownMenuItem
+                            onClick={() => setViewingSaida(saida)}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditDialog(saida)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => setDeletingSaida(saida)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
+                          {saida.userId &&
+                            ability?.can("update", {
+                              __typename: "Saida",
+                              id: saida.id,
+                              userId: saida.userId,
+                            }) && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => openEditDialog(saida)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setDeletingSaida(saida)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </>
+                            )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -467,13 +549,20 @@ export default function SaidasPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{editingSaida ? 'Editar Saída' : 'Nova Saída'}</DialogTitle>
+            <DialogTitle>
+              {editingSaida ? "Editar Saída" : "Nova Saída"}
+            </DialogTitle>
             <DialogDescription>
-              {editingSaida ? 'Edite as informações da saída.' : 'Registre uma nova saída de produto do estoque.'}
+              {editingSaida
+                ? "Edite as informações da saída."
+                : "Registre uma nova saída de produto do estoque."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="tipo"
@@ -488,7 +577,9 @@ export default function SaidasPage() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="APLICACAO">Aplicação</SelectItem>
-                        <SelectItem value="TRANSFERENCIA_NEGATIVA">Transferência Negativa</SelectItem>
+                        <SelectItem value="TRANSFERENCIA_NEGATIVA">
+                          Transferência Negativa
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -524,14 +615,17 @@ export default function SaidasPage() {
                   </FormItem>
                 )}
               />
-              {tipoSaida === 'APLICACAO' && (
+              {tipoSaida === "APLICACAO" && (
                 <FormField
                   control={form.control}
                   name="talhaoId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Talhão *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um talhão" />
@@ -543,7 +637,9 @@ export default function SaidasPage() {
                               <div className="flex flex-col">
                                 <span>{talhao.nome}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {talhao.area} ha - {talhao.localizacao || 'Localização não informada'}
+                                  {talhao.area} ha -{" "}
+                                  {talhao.localizacao ||
+                                    "Localização não informada"}
                                 </span>
                               </div>
                             </SelectItem>
@@ -581,10 +677,7 @@ export default function SaidasPage() {
                   <FormItem>
                     <FormLabel>Data da Saída</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -608,7 +701,7 @@ export default function SaidasPage() {
               />
               <DialogFooter>
                 <Button type="submit" disabled={loading}>
-                  {editingSaida ? 'Atualizar' : 'Registrar Saída'}
+                  {editingSaida ? "Atualizar" : "Registrar Saída"}
                   {loading && <Loader className="ml-2 animate-spin" />}
                 </Button>
               </DialogFooter>
@@ -632,13 +725,19 @@ export default function SaidasPage() {
                 <div>
                   <label className="text-sm font-medium">Data da Saída</label>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(viewingSaida.dataSaida), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                    {format(
+                      new Date(viewingSaida.dataSaida),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: ptBR }
+                    )}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Tipo</label>
                   <p className="text-sm text-muted-foreground">
-                    {viewingSaida.tipo === 'APLICACAO' ? 'Aplicação' : 'Transferência Negativa'}
+                    {viewingSaida.tipo === "APLICACAO"
+                      ? "Aplicação"
+                      : "Transferência Negativa"}
                   </p>
                 </div>
               </div>
@@ -646,27 +745,32 @@ export default function SaidasPage() {
                 <div>
                   <label className="text-sm font-medium">Produto</label>
                   <p className="text-sm text-muted-foreground">
-                    {viewingSaida.produto?.nome || 'Produto não informado'}
+                    {viewingSaida.produto?.nome || "Produto não informado"}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Quantidade</label>
                   <p className="text-sm text-muted-foreground">
-                    {formatQuantity(viewingSaida.quantidade, viewingSaida.produto?.unidade || "un")}
+                    {formatQuantity(
+                      viewingSaida.quantidade,
+                      viewingSaida.produto?.unidade || "un"
+                    )}
                   </p>
                 </div>
               </div>
-              {viewingSaida.tipo === 'APLICACAO' && (
+              {viewingSaida.tipo === "APLICACAO" && (
                 <>
                   <div>
                     <label className="text-sm font-medium">Talhão</label>
                     <p className="text-sm text-muted-foreground">
-                      {viewingSaida.talhao?.nome || 'Talhão não informado'}
+                      {viewingSaida.talhao?.nome || "Talhão não informado"}
                     </p>
                   </div>
                   {viewingSaida.talhao?.area && (
                     <div>
-                      <label className="text-sm font-medium">Área do Talhão</label>
+                      <label className="text-sm font-medium">
+                        Área do Talhão
+                      </label>
                       <p className="text-sm text-muted-foreground">
                         {viewingSaida.talhao?.area} hectares
                       </p>
@@ -674,7 +778,9 @@ export default function SaidasPage() {
                   )}
                   {viewingSaida.talhao?.localizacao && (
                     <div>
-                      <label className="text-sm font-medium">Localização do Talhão</label>
+                      <label className="text-sm font-medium">
+                        Localização do Talhão
+                      </label>
                       <p className="text-sm text-muted-foreground">
                         {viewingSaida.talhao?.localizacao}
                       </p>
@@ -686,7 +792,7 @@ export default function SaidasPage() {
                 <div>
                   <label className="text-sm font-medium">Observações</label>
                   <p className="text-sm text-muted-foreground">
-                    {viewingSaida.observacoes || 'Nenhuma observação'}
+                    {viewingSaida.observacoes || "Nenhuma observação"}
                   </p>
                 </div>
               )}
@@ -704,13 +810,17 @@ export default function SaidasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta saída de &quot;{deletingSaida?.produto?.nome}&quot;?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta saída de &quot;
+              {deletingSaida?.produto?.nome}&quot;? Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

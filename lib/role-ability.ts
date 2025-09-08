@@ -7,6 +7,7 @@ import {
 } from "@casl/ability";
 import { permissions, UserForCASL } from "./permissions";
 import { entradaSubject } from "./subjects/entradas";
+import { saidaSubject } from "./subjects/saidas";
 import z from "zod";
 
 const appAbilitiesSchema = z.union([
@@ -14,7 +15,12 @@ const appAbilitiesSchema = z.union([
   z.tuple([
     z.literal("manage"),
     z.literal("all"),
-  ])
+  ]),
+  saidaSubject,
+  z.tuple([
+    z.literal("manage"),
+    z.literal("all"),
+  ]),
 ])
 
 type AppAbilities = z.infer<typeof appAbilitiesSchema>

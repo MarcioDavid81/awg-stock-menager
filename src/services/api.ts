@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Company,
   User,
@@ -60,7 +61,11 @@ class ApiService {
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      // Criar um erro customizado que preserva as informações da API
+      const error = new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+      (error as any).status = response.status;
+      (error as any).errorData = errorData;
+      throw error;
     }
 
     return response.json();

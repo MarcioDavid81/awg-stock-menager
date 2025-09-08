@@ -98,8 +98,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Estoque insuficiente para esta operação",
-          estoqueDisponivel: estoque?.quantidade || 0,
+          error: `Estoque insificiente: Disponível: ${estoque?.quantidade}, solicitado: ${validatedData.quantidade}`,
         },
         { status: 400 }
       );

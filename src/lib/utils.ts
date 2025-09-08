@@ -59,3 +59,10 @@ export function validarCPF(cpf: string): boolean {
   if (resto === 10 || resto === 11) resto = 0;
   return resto === parseInt(cpf.charAt(10));
 }
+
+  export const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
