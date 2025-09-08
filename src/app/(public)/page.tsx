@@ -47,7 +47,7 @@ export default function HomePage() {
                     scrolled ? "text-green-900" : "text-white"
                   }`}
                 >
-                  AWG StockMenager
+                  AWG StockManager
                 </h1>
               </Link>
             </div>
@@ -291,8 +291,8 @@ export default function HomePage() {
                 Transforme sua Gestão Agrícola
               </h2>
               <p className="text-xl text-green-100 mb-8">
-                Mais de 1000 produtores já confiam no AWG StockMenager para
-                otimizar suas operações
+                Muitos produtores já confiam no AWG StockManager para
+                otimizar suas operações agrícolas.
               </p>
 
               <div className="space-y-4">
@@ -400,8 +400,8 @@ export default function HomePage() {
             Pronto para Revolucionar seu Agronegócio?
           </h2>
           <p className="text-xl text-green-100 mb-8">
-            Junte-se a milhares de produtores que já transformaram sua gestão
-            com o AWG StockMenager
+            Junte-se a todos os produtores que já transformaram sua gestão
+            com o AWG StockManager
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
@@ -429,7 +429,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">AWG StockMenager</h3>
+              <h3 className="text-2xl font-bold mb-4">AWG StockManager</h3>
               <p className="text-gray-400">
                 A solução completa para gestão de estoque no agronegócio.
               </p>
@@ -496,7 +496,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>{`© ${new Date().getFullYear()} AWG StockMenager. Todos os direitos reservados.`}</p>
+            <p>{`© ${new Date().getFullYear()} AWG StockManager. Todos os direitos reservados.`}</p>
           </div>
         </div>
       </footer>
