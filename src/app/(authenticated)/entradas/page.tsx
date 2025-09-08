@@ -84,6 +84,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast as info } from "sonner";
 import { useUser } from "../../../contexts/user-context";
+import { DefineAbilityFor } from "../../../../lib/role-ability";
 
 export default function EntradasPage() {
   const [entradas, setEntradas] = useState<Entrada[]>([]);
@@ -101,6 +102,7 @@ export default function EntradasPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const { user } = useUser();
+  const ability = user ? DefineAbilityFor({ id: user.id, role: user.role }) : null;
 
   const form = useForm<EntradaFormData>({
     resolver: zodResolver(entradaSchema),
@@ -320,10 +322,12 @@ export default function EntradasPage() {
             Registre e acompanhe as entradas de produtos no estoque
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Entrada
-        </Button>
+        {ability?.can("create", "Entrada") && (
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Entrada
+          </Button>
+        )}
       </div>
 
       {/* Estatísticas */}
@@ -538,35 +542,28 @@ export default function EntradasPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {user?.role === "USER" ? (
+                          <DropdownMenuItem
+                            onClick={() => setViewingEntrada(entrada)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver detalhes
+                          </DropdownMenuItem>
+                          {entrada.userId && ability?.can("update", { __typename: "Entrada", id: entrada.id, userId: entrada.userId }) && (
                             <DropdownMenuItem
-                              onClick={() => setViewingEntrada(entrada)}
+                              onClick={() => openEditDialog(entrada)}
                             >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver detalhes
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
                             </DropdownMenuItem>
-                          ) : (
-                            <>
-                              <DropdownMenuItem
-                              onClick={() => setViewingEntrada(entrada)}
+                          )}
+                          {entrada.userId && ability?.can("delete", { __typename: "Entrada", id: entrada.id, userId: entrada.userId }) && (
+                            <DropdownMenuItem
+                              onClick={() => setDeletingEntrada(entrada)}
+                              className="text-destructive focus:text-destructive"
                             >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver detalhes
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
                             </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => openEditDialog(entrada)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setDeletingEntrada(entrada)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

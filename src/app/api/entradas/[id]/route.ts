@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
 import { z } from "zod";
-import { verifyToken } from "../../../../../lib/auth";
+import { authenticateRequest } from "../../../../../lib/api-auth";
+import { PrismaClient } from "../../../../generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -139,29 +139,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do fornecedor não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const entrada = await prisma.entrada.findUnique({
-      where: { 
+      where: {
         id,
         companyId,
-       },
+      },
       include: {
         produto: {
           include: {
@@ -207,38 +205,36 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId, userId } = payload;
-  
+  const { userId, companyId } = authResult.payload;
+  const body = await request.json();
+  const validatedData = updateEntradaSchema.parse(body);
+
   try {
-    const body = await request.json();
-    const validatedData = updateEntradaSchema.parse(body);
-    
     // Verificar se a entrada existe e pertence à empresa
     const existingEntrada = await prisma.entrada.findFirst({
-      where: { 
+      where: {
         id,
         userId,
         companyId,
-       },
+      },
     });
 
     if (!existingEntrada) {
       return NextResponse.json(
         {
           success: false,
-          error: "Entrada não encontrada ou não pertence ao usuário e à empresa",
+          error:
+            "Entrada não encontrada ou não pertence ao usuário e à empresa",
         },
         { status: 404 }
       );
@@ -247,10 +243,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Verificar se o produto existe (se fornecido)
     if (validatedData.produtoId) {
       const produto = await prisma.produto.findFirst({
-        where: { 
+        where: {
           id: validatedData.produtoId,
           companyId,
-         },
+        },
       });
 
       if (!produto) {
@@ -267,9 +263,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Verificar se o fornecedor existe (se fornecido)
     if (validatedData.fornecedorId) {
       const fornecedor = await prisma.fornecedor.findFirst({
-        where: { 
-          id: validatedData.fornecedorId, 
-          companyId 
+        where: {
+          id: validatedData.fornecedorId,
+          companyId,
         },
       });
 
@@ -312,11 +308,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
       // Atualizar entrada
       const entrada = await tx.entrada.update({
-        where: { 
+        where: {
           id,
           userId,
           companyId,
-         },
+        },
         data: {
           ...validatedData,
           dataEntrada: validatedData.dataEntrada
@@ -377,25 +373,22 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
-  
+  const { userId, companyId } = authResult.payload;
+
   try {
     // Verificar se a entrada existe e pertence ao usuário e à empresa
     const existingEntrada = await prisma.entrada.findFirst({
-      where: { 
+      where: {
         id,
         userId,
         companyId,
@@ -406,7 +399,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: "Entrada não encontrada ou não pertence ao usuário e à empresa",
+          error:
+            "Entrada não encontrada ou não pertence ao usuário e à empresa",
         },
         { status: 404 }
       );
@@ -414,7 +408,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Verificar se há estoque suficiente para reverter
     const estoque = await prisma.estoque.findFirst({
-      where: { 
+      where: {
         produtoId: existingEntrada.produtoId,
         companyId,
       },
@@ -443,11 +437,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
       // Excluir entrada
       await tx.entrada.delete({
-        where: { 
+        where: {
           id,
           userId,
           companyId,
-         },
+        },
       });
     });
 
