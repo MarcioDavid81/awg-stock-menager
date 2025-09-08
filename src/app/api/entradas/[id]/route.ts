@@ -215,7 +215,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { userId, companyId } = authResult.payload;
+  const { companyId } = authResult.payload;
   const body = await request.json();
   const validatedData = updateEntradaSchema.parse(body);
 
@@ -224,7 +224,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const existingEntrada = await prisma.entrada.findFirst({
       where: {
         id,
-        userId,
         companyId,
       },
     });
@@ -234,7 +233,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         {
           success: false,
           error:
-            "Entrada não encontrada ou não pertence ao usuário e à empresa",
+            "Entrada não encontrada ou não pertence à empresa",
         },
         { status: 404 }
       );
@@ -310,7 +309,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       const entrada = await tx.entrada.update({
         where: {
           id,
-          userId,
           companyId,
         },
         data: {
@@ -383,14 +381,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { userId, companyId } = authResult.payload;
+  const { companyId } = authResult.payload;
 
   try {
-    // Verificar se a entrada existe e pertence ao usuário e à empresa
+    // Verificar se a entrada existe e pertence à empresa
     const existingEntrada = await prisma.entrada.findFirst({
       where: {
         id,
-        userId,
         companyId,
       },
     });
@@ -400,7 +397,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         {
           success: false,
           error:
-            "Entrada não encontrada ou não pertence ao usuário e à empresa",
+            "Entrada não encontrada ou não pertence à empresa",
         },
         { status: 404 }
       );
@@ -439,7 +436,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       await tx.entrada.delete({
         where: {
           id,
-          userId,
           companyId,
         },
       });
