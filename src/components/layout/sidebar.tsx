@@ -83,7 +83,7 @@ export function Sidebar({ className }: SidebarProps) {
     setLoading(true);
     try {
       await apiService.logout();
-      toast.success("Sair realizado com sucesso!");
+      toast.success("Logout realizado com sucesso!");
       router.push("/");
     } catch (error) {
       console.error(error);
@@ -137,7 +137,7 @@ export function Sidebar({ className }: SidebarProps) {
             <AvatarImage src={user?.avatarUrl || undefined} />
             <AvatarFallback>{user?.name?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
           </Avatar>
-          <span>{user?.name}</span>
+          <span>{user?.role}</span>
         </div>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />

@@ -102,7 +102,9 @@ export default function EntradasPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const { user } = useUser();
-  const ability = user ? DefineAbilityFor({ id: user.id, role: user.role }) : null;
+  const ability = user
+    ? DefineAbilityFor({ id: user.id, role: user.role })
+    : null;
 
   const form = useForm<EntradaFormData>({
     resolver: zodResolver(entradaSchema),
@@ -312,7 +314,6 @@ export default function EntradasPage() {
     );
   };
 
-  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -548,23 +549,28 @@ export default function EntradasPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
-                          {entrada.userId && ability?.can("update", { __typename: "Entrada", id: entrada.id, userId: entrada.userId }) && (
-                            <DropdownMenuItem
-                              onClick={() => openEditDialog(entrada)}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                          )}
-                          {entrada.userId && ability?.can("delete", { __typename: "Entrada", id: entrada.id, userId: entrada.userId }) && (
-                            <DropdownMenuItem
-                              onClick={() => setDeletingEntrada(entrada)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          )}
+                          {entrada.userId &&
+                            ability?.can("update", {
+                              __typename: "Entrada",
+                              id: entrada.id,
+                              userId: entrada.userId,
+                            }) && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => openEditDialog(entrada)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setDeletingEntrada(entrada)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </>
+                            )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
