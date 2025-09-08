@@ -193,7 +193,13 @@ export default function SaidasPage() {
       loadSaidas();
     } catch (error: any) {
       if (error.status === 400 && error.message && error.message.includes("Estoque insificiente")) {
-        info.error(error.message);
+        info.warning(error.message, {
+          style: {
+            backgroundColor: "#F0C531",
+            color: "white",
+        },
+        icon: "❌",
+      });
       } else if (error.status === 404) {
         info.error(error.message || "Produto ou talhão não encontrado.");
       } else {
