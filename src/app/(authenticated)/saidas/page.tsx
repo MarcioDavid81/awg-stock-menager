@@ -71,6 +71,9 @@ import {
   Calendar,
   MapPin,
   Loader,
+  MailCheck,
+  OctagonAlert,
+  OctagonX,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -181,10 +184,22 @@ export default function SaidasPage() {
 
       if (editingSaida) {
         await apiService.updateSaida(editingSaida.id, submitData);
-        info.success("Saída atualizada com sucesso.");
+        info.success("Saída atualizada com sucesso.", {
+          style: {
+            backgroundColor: "#00c951",
+            color: "white",
+          },
+          icon: <MailCheck className="text-white font-black mr-2 h-4 w-4" />
+        });
       } else {
         await apiService.createSaida(submitData);
-        info.success("Saída registrada com sucesso.");
+        info.success("Saída registrada com sucesso.", {
+          style: {
+            backgroundColor: "#00c951",
+            color: "white",
+          },
+          icon: <MailCheck className="text-white font-black mr-2 h-4 w-4" />
+        });
       }
 
       setIsDialogOpen(false);
@@ -198,10 +213,16 @@ export default function SaidasPage() {
             backgroundColor: "#F0C531",
             color: "white",
         },
-        icon: "❌",
+        icon: <OctagonAlert className="text-red-600 font-black mr-2 h-4 w-4" />,
       });
       } else if (error.status === 404) {
-        info.error(error.message || "Produto ou talhão não encontrado.");
+        info.error(error.message || "Produto ou talhão não encontrado.", {
+            style: {
+              backgroundColor: "#e7000b",
+              color: "white",
+          },
+          icon: <OctagonX className="text-white font-black  mr-2 h-4 w-4" />,
+          });
       } else {
         // Erro genérico
         info.error(
@@ -209,7 +230,13 @@ export default function SaidasPage() {
             editingSaida
               ? "Não foi possível atualizar a saída."
               : "Não foi possível registrar a saída."
-          }`
+          }`, {
+            style: {
+              backgroundColor: "#e7000b",
+              color: "white",
+          },
+          icon: <OctagonX className="text-white font-black  mr-2 h-4 w-4" />,
+          }
         );
       }
     } finally {
@@ -248,12 +275,24 @@ export default function SaidasPage() {
 
     try {
       await apiService.deleteSaida(deletingSaida.id);
-      info.success("Saída excluída com sucesso.");
+      info.success("Saída excluída com sucesso.", {
+          style: {
+            backgroundColor: "#00c951",
+            color: "white",
+          },
+          icon: <MailCheck className="text-white font-black mr-2 h-4 w-4" />
+        });
       setDeletingSaida(null);
       loadSaidas();
     } catch (error) {
       console.error("Erro ao excluir saída:", error);
-      info.error("Erro ao excluir saída.");
+      info.error("Erro ao excluir saída.", {
+            style: {
+              backgroundColor: "#e7000b",
+              color: "white",
+          },
+          icon: <OctagonX className="text-white font-black  mr-2 h-4 w-4" />,
+          });
     }
   };
 
