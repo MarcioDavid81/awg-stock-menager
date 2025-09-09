@@ -145,7 +145,7 @@ export default function TalhoesPage() {
       nome: talhao.nome,
       area: talhao.area,
       localizacao: talhao.localizacao || '',
-      observacoes: talhao.observacoes || '',
+      ativo: talhao.ativo,
       farmId: talhao.farmId || '',
     });
     setIsDialogOpen(true);
@@ -295,7 +295,7 @@ export default function TalhoesPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Área (ha)</TableHead>
                   <TableHead>Fazenda</TableHead>
-                  <TableHead>Observações</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -321,12 +321,14 @@ export default function TalhoesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {talhao.observacoes ? (
-                        <span className="text-sm truncate max-w-[200px] block">
-                          {talhao.observacoes}
-                        </span>
+                      {talhao.ativo ? (
+                        <Badge variant="default" className="font-mono">
+                          Ativo
+                        </Badge>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Nenhuma</span>
+                        <Badge variant="destructive" className="font-mono">
+                          Inativo
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>

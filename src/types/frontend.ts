@@ -56,9 +56,10 @@ export interface Farm {
 export interface Talhao {
   id: string;
   nome: string;
+  descricao?: string;
   area: number;
   localizacao?: string;
-  observacoes?: string;
+  ativo: boolean;
   farmId?: string;
   farm?: Farm;
   userId?: string;
@@ -188,6 +189,7 @@ export const talhaoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
   area: z.number().positive('Área deve ser um número positivo'),
   localizacao: z.string().optional(),
+  ativo: z.boolean().optional(),
   observacoes: z.string().optional(),
   farmId: z.string().optional(),
   userId: z.string().optional(),
