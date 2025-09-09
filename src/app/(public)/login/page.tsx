@@ -161,7 +161,7 @@ export default function LoginPage() {
               <p className="text-sm text-gray-600">
                 Não tem uma conta?{" "}
                 <a
-                  href="#"
+                  href="https://api.whatsapp.com/send?phone=5555997116476"
                   className="font-medium text-primary hover:underline"
                 >
                   Entre em contato com o administrador
@@ -169,7 +169,7 @@ export default function LoginPage() {
               </p>
               <span className="text-gray-300">ou</span>
             </div>
-              <Link href="/register" className="text-primary text-sm font-medium flex items-center justify-center hover:underline">
+              <Link href="/" className="text-primary text-sm font-medium flex items-center justify-center hover:underline">
                 Voltar à Home
               </Link>
           </CardContent>

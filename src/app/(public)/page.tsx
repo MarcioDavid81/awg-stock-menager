@@ -190,7 +190,7 @@ export default function HomePage() {
             Otimize recursos, maximize lucros e tome decisões baseadas em dados.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
+            <Link href="/dashboard">
               <Button
                 size="lg"
                 className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg"
@@ -199,13 +199,15 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button
+            <Link href="https://youtu.be/fqM8kd92AM8" target="_blank" rel="noopener noreferrer">
+              <Button
               size="lg"
               variant="outline"
               className="border-white text-green-600 hover:bg-white hover:text-green-800 px-8 py-4 text-lg"
             >
               Ver Demonstração
             </Button>
+            </Link>
           </div>
         </div>
 
