@@ -23,5 +23,14 @@ export const permissions: Record<Role, PermissionByRole> = {
     can(["read", "create"], "Saida");
     cannot(["update", "delete"], "Saida");
     can(["update", "delete"], "Saida", { userId: { $eq: user.id }});
+    can(["read", "create"], "Fornecedor");
+    cannot(["update", "delete"], "Fornecedor");
+    can(["update", "delete"], "Fornecedor", { userId: { $eq: user.id }});
+    can(["read", "create"], "Produto");
+    cannot(["update", "delete"], "Produto");
+    can(["update", "delete"], "Produto", { userId: { $eq: user.id }});
+    can(["read", "create"], "Talhao");
+    cannot(["update", "delete"], "Talhao");
+    can(["update", "delete"], "Talhao", { userId: { $eq: user.id }});
   },
 };

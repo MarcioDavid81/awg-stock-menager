@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { userId, companyId } = authResult.payload;
+  const {   companyId } = authResult.payload;
   const body = await request.json();
   const validatedData = updateTalhaoSchema.parse(body);
   try {
@@ -188,7 +188,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { 
         id: id,
         companyId: companyId,
-        userId: userId,
        },
       data: validatedData,
     });
@@ -240,7 +239,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { userId, companyId } = authResult.payload;
+  const { companyId } = authResult.payload;
   try {
 
     // Verificar se o talhão existe
@@ -248,7 +247,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { 
         id: id,
         companyId: companyId,
-        userId: userId,
        },
       include: {
         saidas: true,
@@ -274,7 +272,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         where: { 
           id: id,
           companyId: companyId,
-          userId: userId,
          },
         data: { ativo: false },
       });
@@ -291,7 +288,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         where: { 
           id: id,
           companyId: companyId,
-          userId: userId,
          },
       });
 

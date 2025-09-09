@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { companyId, userId } = authResult.payload;
+  const { companyId } = authResult.payload;
   const body = await request.json();
   const validatedData = updateProdutoSchema.parse(body);
   try {
@@ -171,7 +171,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const produto = await prisma.produto.update({
       where: {
         id: id,
-        userId: userId,
         companyId: companyId,
       },
       data: validatedData,
@@ -227,13 +226,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 401 }
     );
   }
-  const { userId, companyId } = authResult.payload;
+  const { companyId } = authResult.payload;
   try {
     // Verificar se o produto existe
     const existingProduto = await prisma.produto.findUnique({
       where: {
         id: id,
-        userId: userId,
         companyId: companyId,
       },
       include: {
@@ -248,7 +246,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         {
           success: false,
           error:
-            "Produto não encontrado, ou não pertence ao usuário e à empresa",
+            "Produto não encontrado, ou não pertence à empresa",
         },
         { status: 404 }
       );
@@ -263,7 +261,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       const produto = await prisma.produto.update({
         where: {
           id: id,
-          userId: userId,
           companyId: companyId,
         },
         data: { ativo: false },
@@ -286,7 +283,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       await prisma.produto.delete({
         where: {
           id: id,
-          userId: userId,
           companyId: companyId,
         },
       });

@@ -49,7 +49,7 @@ class ApiService {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
-      credentials: 'include', // Inclui cookies httpOnly automaticamente
+      credentials: 'include',
       headers: {
         ...(requireAuth ? this.getAuthHeaders() : { 'Content-Type': 'application/json' }),
         ...options.headers,

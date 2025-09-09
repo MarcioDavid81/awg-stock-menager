@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "../../../../generated/prisma";
 import { z } from "zod";
 import { validarCNPJ, validarCPF } from "@/lib/utils";
-import { verifyToken } from "../../../../../lib/auth";
+import { authenticateRequest } from "../../../../../lib/api-auth";
 
 const prisma = new PrismaClient();
 
@@ -54,23 +54,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do fornecedor não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const fornecedor = await prisma.fornecedor.findUnique({
       where: {
@@ -160,31 +158,28 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do fornecedor não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { companyId } = authResult.payload;
   const body = await request.json();
   const validatedData = updateFornecedorSchema.parse(body);
   try {
-    // Verificar se o fornecedor existe
+    // Verificar se o fornecedor existe e pertence à empresa
     const existingFornecedor = await prisma.fornecedor.findUnique({
       where: { 
         id: id,
-        userId: userId,
         companyId: companyId,
        },
     });
@@ -269,29 +264,26 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
-      { error: "ID do fornecedor não fornecido" },
+      { error: "ID da entrada não fornecido" },
       { status: 400 }
     );
   }
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     // Verificar se o fornecedor existe
     const existingFornecedor = await prisma.fornecedor.findUnique({
       where: { 
         id: id,
-        userId: userId,
         companyId: companyId,
        },
       include: {
@@ -303,7 +295,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: "Fornecedor não encontrado ou não pertence ao usuário e à empresa",
+          error: "Fornecedor não encontrado ou não pertence à empresa",
         },
         { status: 404 }
       );
@@ -317,7 +309,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       const fornecedor = await prisma.fornecedor.update({
         where: { 
           id: id,
-          userId: userId,
           companyId: companyId,
          },
         data: { ativo: false },
@@ -334,7 +325,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       await prisma.fornecedor.delete({
         where: { 
           id: id,
-          userId: userId,
           companyId: companyId,
          },
       });

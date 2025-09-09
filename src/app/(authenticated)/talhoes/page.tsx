@@ -53,6 +53,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { apiService } from '@/services/api';
 import { Farm, Talhao, TalhaoFormData, talhaoSchema } from '@/types/frontend';
 import { toast as info } from 'sonner';
+import { useUser } from '@/contexts/user-context';
+import { DefineAbilityFor } from '../../../../lib/role-ability';
 
 export default function TalhoesPage() {
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
@@ -64,6 +66,10 @@ export default function TalhoesPage() {
   const [deletingTalhao, setDeletingTalhao] = useState<Talhao | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+   const { user } = useUser();
+  const ability = user
+    ? DefineAbilityFor({ id: user.id, role: user.role })
+    : null;
 
 
   const form = useForm<TalhaoFormData>({
@@ -335,13 +341,23 @@ export default function TalhoesPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeletingTalhao(talhao)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
+                          {talhao.userId &&
+                            ability?.can("delete", {
+                              __typename: "Talhao",
+                              id: talhao.id,
+                              userId: talhao.userId,
+                            }) && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setDeletingTalhao(talhao)
+                                  }
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </>
+                            )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

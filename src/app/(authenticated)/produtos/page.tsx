@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -28,21 +34,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,35 +58,53 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Package, Loader } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { apiService } from '@/services/api';
-import { Produto, Fornecedor, ProdutoFormData, produtoSchema } from '@/types/frontend';
-import { toast as info } from 'sonner'
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Package,
+  Loader,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiService } from "@/services/api";
+import {
+  Produto,
+  Fornecedor,
+  ProdutoFormData,
+  produtoSchema,
+} from "@/types/frontend";
+import { toast as info } from "sonner";
+import { useUser } from "@/contexts/user-context";
+import { DefineAbilityFor } from "../../../../lib/role-ability";
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoria, setSelectedCategoria] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null);
   const [deletingProduto, setDeletingProduto] = useState<Produto | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
+  const { user } = useUser();
+  const ability = user
+    ? DefineAbilityFor({ id: user.id, role: user.role })
+    : null;
 
   const form = useForm<ProdutoFormData>({
     resolver: zodResolver(produtoSchema),
     defaultValues: {
-      nome: '',
-      categoria: '',
-      unidade: '',
-      observacoes: '',
-      fornecedorId: '',
+      nome: "",
+      categoria: "",
+      unidade: "",
+      observacoes: "",
+      fornecedorId: "",
     },
   });
 
@@ -89,10 +113,11 @@ export default function ProdutosPage() {
       setLoading(true);
       const filters = {
         ...(searchTerm && { nome: searchTerm }),
-        ...(selectedCategoria && selectedCategoria !== 'all' && { categoria: selectedCategoria }),
+        ...(selectedCategoria &&
+          selectedCategoria !== "all" && { categoria: selectedCategoria }),
       };
       const response = await apiService.getProdutos(filters, page, 10);
-      
+
       // Para cada produto, buscar a última movimentação
       const produtosComMovimentacao = await Promise.all(
         response.data.map(async (produto) => {
@@ -100,17 +125,20 @@ export default function ProdutosPage() {
             const produtoDetalhado = await apiService.getProduto(produto.id);
             return produtoDetalhado.data;
           } catch (error) {
-            console.error(`Erro ao buscar detalhes do produto ${produto.id}:`, error);
+            console.error(
+              `Erro ao buscar detalhes do produto ${produto.id}:`,
+              error
+            );
             return produto;
           }
         })
       );
-      
+
       setProdutos(produtosComMovimentacao);
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
-      info.error('Erro ao carregar produtos.');
+      console.error("Erro ao carregar produtos:", error);
+      info.error("Erro ao carregar produtos.");
     } finally {
       setLoading(false);
     }
@@ -121,7 +149,7 @@ export default function ProdutosPage() {
       const response = await apiService.getFornecedores({}, 1, 1000);
       setFornecedores(response.data);
     } catch (error) {
-      console.error('Erro ao carregar fornecedores:', error);
+      console.error("Erro ao carregar fornecedores:", error);
     }
   }, []);
 
@@ -134,22 +162,22 @@ export default function ProdutosPage() {
     try {
       const submitData = {
         ...data,
-        fornecedorId: data.fornecedorId === 'none' ? '' : data.fornecedorId,
+        fornecedorId: data.fornecedorId === "none" ? "" : data.fornecedorId,
       };
       if (editingProduto) {
         await apiService.updateProduto(editingProduto.id, submitData);
-        info.success('Produto atualizado com sucesso.');
+        info.success("Produto atualizado com sucesso.");
       } else {
         await apiService.createProduto(submitData);
-        info.success('Produto criado com sucesso.');
+        info.success("Produto criado com sucesso.");
       }
       setIsDialogOpen(false);
       setEditingProduto(null);
       form.reset();
       loadProdutos();
     } catch (error) {
-      console.error('Erro ao salvar produto:', error);
-      info.error('Erro ao salvar produto.');
+      console.error("Erro ao salvar produto:", error);
+      info.error("Erro ao salvar produto.");
     }
   };
 
@@ -159,8 +187,8 @@ export default function ProdutosPage() {
       nome: produto.nome,
       categoria: produto.categoria,
       unidade: produto.unidade,
-      observacoes: produto.descricao || '',
-      fornecedorId: produto.fornecedorId || '',
+      observacoes: produto.descricao || "",
+      fornecedorId: produto.fornecedorId || "",
     });
     setIsDialogOpen(true);
   };
@@ -170,54 +198,58 @@ export default function ProdutosPage() {
 
     try {
       await apiService.deleteProduto(deletingProduto.id);
-      info.success('Produto excluído com sucesso.');
+      info.success("Produto excluído com sucesso.");
       setDeletingProduto(null);
       loadProdutos();
     } catch (error) {
-      console.error('Erro ao excluir produto:', error);
-      info.error('Erro ao excluir produto.');
+      console.error("Erro ao excluir produto:", error);
+      info.error("Erro ao excluir produto.");
     }
   };
 
   const openCreateDialog = () => {
     setEditingProduto(null);
     form.reset({
-      nome: '',
-      categoria: '',
-      unidade: '',
-      observacoes: '',
-      fornecedorId: '',
+      nome: "",
+      categoria: "",
+      unidade: "",
+      observacoes: "",
+      fornecedorId: "",
     });
     setIsDialogOpen(true);
   };
 
   const getUltimaMovimentacao = (produto: Produto) => {
-     const ultimaEntrada = produto.entradas?.[0];
-     const ultimaSaida = produto.saidas?.[0];
-     
-     if (!ultimaEntrada && !ultimaSaida) {
-       return { tipo: 'Nenhuma', origem: '-', data: null };
-     }
-     
-     const dataEntrada = ultimaEntrada ? new Date(ultimaEntrada.dataEntrada) : null;
-     const dataSaida = ultimaSaida ? new Date(ultimaSaida.dataSaida) : null;
-     
-     if (!dataSaida || (dataEntrada && dataEntrada > dataSaida)) {
-       return {
-         tipo: 'Entrada',
-         origem: ultimaEntrada?.fornecedor?.nome || 'Fornecedor não informado',
-         data: dataEntrada
-       };
-     } else {
-       return {
-         tipo: 'Saída',
-         origem: ultimaSaida?.talhao?.nome || 'Talhão não informado',
-         data: dataSaida
-       };
-     }
-   };
+    const ultimaEntrada = produto.entradas?.[0];
+    const ultimaSaida = produto.saidas?.[0];
 
-   const categorias = [...new Set(produtos.map(p => p.categoria))].filter(Boolean);
+    if (!ultimaEntrada && !ultimaSaida) {
+      return { tipo: "Nenhuma", origem: "-", data: null };
+    }
+
+    const dataEntrada = ultimaEntrada
+      ? new Date(ultimaEntrada.dataEntrada)
+      : null;
+    const dataSaida = ultimaSaida ? new Date(ultimaSaida.dataSaida) : null;
+
+    if (!dataSaida || (dataEntrada && dataEntrada > dataSaida)) {
+      return {
+        tipo: "Entrada",
+        origem: ultimaEntrada?.fornecedor?.nome || "Fornecedor não informado",
+        data: dataEntrada,
+      };
+    } else {
+      return {
+        tipo: "Saída",
+        origem: ultimaSaida?.talhao?.nome || "Talhão não informado",
+        data: dataSaida,
+      };
+    }
+  };
+
+  const categorias = [...new Set(produtos.map((p) => p.categoria))].filter(
+    Boolean
+  );
 
   return (
     <div className="space-y-6">
@@ -255,7 +287,10 @@ export default function ProdutosPage() {
                 />
               </div>
             </div>
-            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+            <Select
+              value={selectedCategoria}
+              onValueChange={setSelectedCategoria}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
@@ -289,7 +324,9 @@ export default function ProdutosPage() {
           ) : produtos.length === 0 ? (
             <div className="text-center py-8">
               <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum produto encontrado.</p>
+              <p className="text-muted-foreground">
+                Nenhum produto encontrado.
+              </p>
               <Button onClick={openCreateDialog} className="mt-4">
                 <Plus className="mr-2 h-4 w-4" />
                 Criar primeiro produto
@@ -311,58 +348,81 @@ export default function ProdutosPage() {
                 {produtos.map((produto) => {
                   const ultimaMovimentacao = getUltimaMovimentacao(produto);
                   return (
-                  <TableRow key={produto.id}>
-                    <TableCell className="font-medium">{produto.nome}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{produto.categoria}</Badge>
-                    </TableCell>
-                    <TableCell>{produto.unidade}</TableCell>
-                    <TableCell>
-                      {produto.entradas?.[0]?.fornecedor?.nome || 'Sem fornecedor'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant={ultimaMovimentacao.tipo === 'Entrada' ? 'default' : ultimaMovimentacao.tipo === 'Saída' ? 'destructive' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {ultimaMovimentacao.tipo}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {ultimaMovimentacao.origem}
-                          </span>
+                    <TableRow key={produto.id}>
+                      <TableCell className="font-medium">
+                        {produto.nome}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{produto.categoria}</Badge>
+                      </TableCell>
+                      <TableCell>{produto.unidade}</TableCell>
+                      <TableCell>
+                        {produto.entradas?.[0]?.fornecedor?.nome ||
+                          "Sem fornecedor"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                ultimaMovimentacao.tipo === "Entrada"
+                                  ? "default"
+                                  : ultimaMovimentacao.tipo === "Saída"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {ultimaMovimentacao.tipo}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {ultimaMovimentacao.origem}
+                            </span>
+                          </div>
+                          {ultimaMovimentacao.data && (
+                            <span className="text-xs text-muted-foreground">
+                              {ultimaMovimentacao.data.toLocaleDateString(
+                                "pt-BR"
+                              )}
+                            </span>
+                          )}
                         </div>
-                        {ultimaMovimentacao.data && (
-                          <span className="text-xs text-muted-foreground">
-                            {ultimaMovimentacao.data.toLocaleDateString('pt-BR')}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(produto)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeletingProduto(produto)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(produto)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            {produto.userId &&
+                            ability?.can("delete", {
+                              __typename: "Produto",
+                              id: produto.id,
+                              userId: produto.userId,
+                            }) && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setDeletingProduto(produto)
+                                  }
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -399,16 +459,19 @@ export default function ProdutosPage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingProduto ? 'Editar Produto' : 'Novo Produto'}
+              {editingProduto ? "Editar Produto" : "Novo Produto"}
             </DialogTitle>
             <DialogDescription>
               {editingProduto
-                ? 'Edite as informações do produto abaixo.'
-                : 'Preencha as informações do novo produto.'}
+                ? "Edite as informações do produto abaixo."
+                : "Preencha as informações do novo produto."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="nome"
@@ -429,7 +492,10 @@ export default function ProdutosPage() {
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Fertilizante, Herbicida" {...field} />
+                      <Input
+                        placeholder="Ex: Fertilizante, Herbicida"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -491,7 +557,7 @@ export default function ProdutosPage() {
               />
               <DialogFooter>
                 <Button type="submit" disabled={loading}>
-                  {editingProduto ? 'Atualizar' : 'Criar'}
+                  {editingProduto ? "Atualizar" : "Criar"}
                   {loading && <Loader className="ml-2 h-4 w-4 animate-spin" />}
                 </Button>
               </DialogFooter>
@@ -509,13 +575,16 @@ export default function ProdutosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o produto &quot;{deletingProduto?.nome}&quot;?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o produto &quot;
+              {deletingProduto?.nome}&quot;? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

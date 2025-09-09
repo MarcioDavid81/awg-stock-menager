@@ -8,7 +8,11 @@ import {
 import { permissions, UserForCASL } from "./permissions";
 import { entradaSubject } from "./subjects/entradas";
 import { saidaSubject } from "./subjects/saidas";
+import { fornecedorSubject } from "./subjects/fornecedores";
+
 import z from "zod";
+import { produtoSubject } from "./subjects/produtos";
+import { talhaoSubject } from "./subjects/talhoes";
 
 const appAbilitiesSchema = z.union([
   entradaSubject,
@@ -17,6 +21,21 @@ const appAbilitiesSchema = z.union([
     z.literal("all"),
   ]),
   saidaSubject,
+  z.tuple([
+    z.literal("manage"),
+    z.literal("all"),
+  ]),
+  fornecedorSubject,
+  z.tuple([
+    z.literal("manage"),
+    z.literal("all"),
+  ]),
+  produtoSubject,
+  z.tuple([
+    z.literal("manage"),
+    z.literal("all"),
+  ]),
+  talhaoSubject,
   z.tuple([
     z.literal("manage"),
     z.literal("all"),
