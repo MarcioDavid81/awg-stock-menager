@@ -1,13 +1,13 @@
 import z from "zod";
-import { verifyToken } from "../../../../../lib/auth";
 import { PrismaClient } from "../../../../generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from "../../../../../lib/api-auth";
 
 const prisma = new PrismaClient();
 
 const updateFazendaSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  area: z.number().min(1, "Area é obrigatória"),
+  area: z.number().optional(),
 });
 
 interface RouteParams {
@@ -24,26 +24,23 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const {   companyId } = authResult.payload;
   const body = await req.json();
   const validatedData = updateFazendaSchema.parse(body);
   try {
     const existingFarm = await prisma.farm.findUnique({
       where: {
         id: id,
-        userId: userId,
         companyId: companyId,
       },
     });
@@ -56,7 +53,6 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const fazenda = await prisma.farm.update({
       where: {
         id: id,
-        userId: userId,
         companyId: companyId,
       },
       data: {
@@ -82,24 +78,21 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
     return NextResponse.json(
-      { error: "Token não enviado ou mal formatado" },
+      { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
-  const token = authHeader.split(" ")[1];
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-  const { userId, companyId } = payload;
+  const { companyId } = authResult.payload;
   try {
     const fazenda = await prisma.farm.delete({
       where: {
         id: id,
-        userId: userId,
         companyId: companyId,
       },
     });
