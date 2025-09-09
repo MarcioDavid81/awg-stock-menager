@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { LoginFormData, loginSchema } from "@/types/frontend";
 import logo from "../../../../public/dr agenda.png";
 import Image from "next/image";
+import Link from "next/link";
 
 
 export default function LoginPage() {
@@ -59,11 +60,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen relative flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <video
+          autoPlay
+          muted
+          loop
+          className="absolute top-0 object-cover z-0 w-full h-full"
+          poster="https://res.cloudinary.com/dgdvt1tgv/image/upload/v1757384473/heroawg_ktytox.png"
+        >
+          <source
+            src="https://res.cloudinary.com/dgdvt1tgv/video/upload/v1757384237/13905670_1920_1080_60fps_p4o4fa.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-800/70 to-green-700/60" />
+      <div className="relative z-10 max-w-md w-full space-y-8">
         <div className="flex flex-col items-center justify-center">
           <Image src={logo} alt="logo" width={200} height={150} />
-          <p className="text-gray-600">Sistema de Gestão de Estoque Agrícola</p>
+          <p className="text-gray-300">Sistema de Gestão de Estoque Agrícola</p>
         </div>
 
         <Card className="w-full">
@@ -153,11 +167,15 @@ export default function LoginPage() {
                   Entre em contato com o administrador
                 </a>
               </p>
+              <span className="text-gray-300">ou</span>
             </div>
+              <Link href="/register" className="text-primary text-sm font-medium flex items-center justify-center hover:underline">
+                Voltar à Home
+              </Link>
           </CardContent>
         </Card>
 
-        <div className="text-center text-xs text-gray-500">
+        <div className="text-center text-xs text-gray-300">
           {`© ${new Date().getFullYear()} AWG StockManager. Todos os direitos reservados.`}
         </div>
       </div>
