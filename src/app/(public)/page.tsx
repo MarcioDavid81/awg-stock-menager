@@ -163,13 +163,18 @@ export default function HomePage() {
 
       {/* Hero Section with Parallax */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1600747476236-76579658b1b1?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
-          }}
-        />
+        <video
+          autoPlay
+          muted
+          loop
+          className="absolute top-0 object-cover z-0 w-full h-full"
+          poster="https://res.cloudinary.com/dgdvt1tgv/image/upload/v1757384473/heroawg_ktytox.png"
+        >
+          <source
+            src="https://res.cloudinary.com/dgdvt1tgv/video/upload/v1757384237/13905670_1920_1080_60fps_p4o4fa.mp4"
+            type="video/mp4"
+          />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-800/70 to-green-700/60" />
 
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">

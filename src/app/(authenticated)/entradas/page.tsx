@@ -8,7 +8,7 @@ import { EntradasTable } from "./_components/entradas-table";
 import { EntradaFormDialog } from "./_components/entrada-form-dialog";
 import { EntradaViewDialog } from "./_components/entrada-view-dialog";
 import { EntradaDeleteDialog } from "./_components/entrada-delete-dialog";
-import { Plus, MailCheck, OctagonAlert, OctagonX } from "lucide-react";
+import { Plus, MailCheck, OctagonX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiService } from "@/services/api";
