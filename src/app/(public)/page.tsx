@@ -33,12 +33,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navbar */}
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      <nav className="flex items-center justify-center">        
+        <div className={`fixed top-4 w-full rounded-2xl z-50 transition-all duration-300 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${
           scrolled ? "bg-white/20 backdrop-blur-xl shadow-lg" : "bg-transparent"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        }`}>
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/">
@@ -411,7 +409,7 @@ export default function HomePage() {
             com o AWG StockManager
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
+            <Link href="/dashboard">
               <Button
                 size="lg"
                 className="bg-white text-green-800 hover:bg-gray-100 px-8 py-4 text-lg"
@@ -420,13 +418,15 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-green-600 hover:bg-white hover:text-green-800 px-8 py-4 text-lg"
-            >
-              Falar com Especialista
-            </Button>
+            <Link href="https://wa.link/78i8l2" target="_blank" rel="noopener noreferrer">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white text-green-600 hover:bg-white hover:text-green-800 px-8 py-4 text-lg"
+              >
+                Falar com Especialista
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
