@@ -67,6 +67,11 @@ const navigation = [
     href: "/estoque",
     icon: Warehouse,
   },
+  {
+    name: "Usuários",
+    href: "/usuarios",
+    icon: Users,
+  },
 ];
 
 interface SidebarProps {

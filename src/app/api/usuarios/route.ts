@@ -3,6 +3,7 @@ import { PrismaClient } from "../../../generated/prisma";
 import { z } from "zod";
 import { hash } from "bcrypt";
 import { uploadAvatarToCloudinary } from "../../../../lib/cloudinary/upload-avatar";
+import { authenticateRequest } from "../../../../lib/api-auth";
 
 const prisma = new PrismaClient();
 
@@ -16,18 +17,30 @@ const createUserSchema = z.object({
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
     return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
   }, "A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial"),
-  avatarUrl: z.instanceof(File).optional().nullable(),
+  avatarUrl: z.instanceof(File).optional(),
   role: z.enum(["ADMIN", "USER"]).default("USER"),
   companyId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+  if (!authResult.payload) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+  const { companyId } = authResult.payload;
   try {
     const body = await req.json();
     const validatedData = createUserSchema.parse(body);
     const existUser = await prisma.user.findFirst({
       where: {
         OR: [{ email: validatedData.email }],
+        companyId: companyId,
       },
     });
     if (existUser) {
@@ -43,8 +56,9 @@ export async function POST(req: NextRequest) {
     );
     const userData = {
       ...validatedData,
-      avatarUrl: avatarImageUrl,
+      avatarUrl: avatarImageUrl || null,
       password: hashedPassword,
+      companyId: companyId,
     };
     const user = await prisma.user.create({
       data: userData,
@@ -100,14 +114,24 @@ export async function GET(req: NextRequest) {
       skip: (page - 1) * limit,
       take: limit,
     });
+    // Contar total de registros
+    const total = await prisma.user.count({
+      where: {
+        name: {
+          contains: search,
+        },
+      },
+    });
+
     return NextResponse.json({
       success: true,
       data: users,
-      message: "Usuários buscados com sucesso",
-      total: users.length,
-      totalPages: Math.ceil(users.length / limit),
-      page,
-      limit,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error("Erro ao buscar usuários:", error);

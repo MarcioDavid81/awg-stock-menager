@@ -62,5 +62,6 @@ export const config = {
     "/produtos",
     "/saidas",
     "/talhoes",
+    "/usuarios",
   ],
 };

@@ -89,7 +89,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     );
     const userData = {
       ...validatedData,
-      avatarUrl: avatarImageUrl,
+      avatarUrl: avatarImageUrl || null,
       password: hashedPassword,
     };
     const user = await prisma.user.update({

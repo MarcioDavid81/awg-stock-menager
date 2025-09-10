@@ -13,6 +13,7 @@ import { fornecedorSubject } from "./subjects/fornecedores";
 import z from "zod";
 import { produtoSubject } from "./subjects/produtos";
 import { talhaoSubject } from "./subjects/talhoes";
+import { usuarioSubject } from "./subjects/usuarios";
 
 const appAbilitiesSchema = z.union([
   entradaSubject,
@@ -36,6 +37,11 @@ const appAbilitiesSchema = z.union([
     z.literal("all"),
   ]),
   talhaoSubject,
+  z.tuple([
+    z.literal("manage"),
+    z.literal("all"),
+  ]),
+  usuarioSubject,
   z.tuple([
     z.literal("manage"),
     z.literal("all"),

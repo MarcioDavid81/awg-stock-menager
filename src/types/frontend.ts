@@ -169,10 +169,17 @@ export const companySchema = z.object({
 
 export const userSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().min(1, 'Email é obrigatório'),
-  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
-  avatarUrl: z.string().optional(),
-  role: z.enum(['ADMIN', 'USER']),
+  email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").refine((value) => {
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+  }, "A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial"),
+  avatarUrl: z.instanceof(File).optional(),
+  role: z.enum(['ADMIN', 'USER']).default('USER'),
+  companyId: z.string().optional(),
 });
 
 export const loginSchema = z.object({
