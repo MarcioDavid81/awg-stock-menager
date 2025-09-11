@@ -16,6 +16,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const internalLinks = [
+  { href: "#features", label: "Recursos" },
+  { href: "#benefits", label: "Benefícios" },
+  { href: "#technology", label: "Tecnologia" },
+]
+
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,30 +58,19 @@ export default function HomePage() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="#features"
-                className={`transition-colors duration-300 hover:text-green-600 ${
-                  scrolled ? "text-gray-900" : "text-white"
-                }`}
-              >
-                Recursos
-              </a>
-              <a
-                href="#benefits"
-                className={`transition-colors duration-300 hover:text-green-600 ${
-                  scrolled ? "text-gray-900" : "text-white"
-                }`}
-              >
-                Benefícios
-              </a>
-              <a
-                href="#technology"
-                className={`transition-colors duration-300 hover:text-green-600 ${
-                  scrolled ? "text-gray-900" : "text-white"
-                }`}
-              >
-                Tecnologia
-              </a>
+              {internalLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`transition-colors duration-300 hover:text-green-600 ${
+                    scrolled ? "text-gray-900" : "text-white"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              ))}
+
+            {/* Login Button */}
               <Link href="/login">
                 <Button className="bg-green-600 hover:bg-green-700 text-white">
                   Entrar
@@ -113,39 +108,22 @@ export default function HomePage() {
               }`}
             >
               <div className="px-4 py-6 space-y-4">
-                <a
-                  href="#features"
-                  className={`block py-2 text-lg transition-colors duration-300 ${
-                    scrolled
-                      ? "text-gray-700 hover:text-green-600"
-                      : "text-white hover:text-green-300"
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Recursos
-                </a>
-                <a
-                  href="#benefits"
-                  className={`block py-2 text-lg transition-colors duration-300 ${
-                    scrolled
-                      ? "text-gray-700 hover:text-green-600"
-                      : "text-white hover:text-green-300"
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Benefícios
-                </a>
-                <a
-                  href="#technology"
-                  className={`block py-2 text-lg transition-colors duration-300 ${
-                    scrolled
-                      ? "text-gray-700 hover:text-green-600"
-                      : "text-white hover:text-green-300"
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Tecnologia
-                </a>
+                {internalLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={`block py-2 text-lg transition-colors duration-300 ${
+                      scrolled
+                        ? "text-gray-700 hover:text-green-600"
+                        : "text-white hover:text-green-300"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+
+                {/* Login Button */}
                 <div className="pt-4">
                   <Link href="/login">
                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
